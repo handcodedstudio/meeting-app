@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    "types": ["node"],
+    "paths": {
+      "@shared/*": ["./src/shared/*"],
+      "@main/*": ["./src/main/*"]
+    },
+    "outDir": "out/types-node"
+  },
+  "include": [
+    "src/main/**/*.ts",
+    "src/preload/**/*.ts",
+    "src/shared/**/*.ts",
+    "scripts/**/*.mjs",
+    "electron.vite.config.ts",
+    "vitest.config.ts",
+    "tests/setup.ts",
+    "tests/unit/services/**/*.ts",
+    "tests/unit/prompts/**/*.ts",
+    "tests/unit/parsers/**/*.ts"
+  ]
+}

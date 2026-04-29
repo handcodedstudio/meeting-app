@@ -1,0 +1,49 @@
+appId: studio.handcoded.transcriber
+productName: Local Meeting Transcriber
+
+directories:
+  output: dist
+  buildResources: build
+
+asar: true
+asarUnpack:
+  - resources/python/**
+  - resources/models/**
+
+files:
+  - out/**
+  - package.json
+
+extraResources:
+  - from: resources/python
+    to: python
+    filter:
+      - "**/*"
+      - "!**/__pycache__/**"
+      - "!**/*.pyc"
+  - from: resources/models
+    to: models
+    filter:
+      - "**/*"
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - arm64
+  category: public.app-category.productivity
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: false
+
+dmg:
+  writeUpdateInfo: false
+  artifactName: "${productName}-${version}-${arch}.dmg"
+
+afterPack: scripts/postbuild-codesign.cjs
+
+publish: null
+
+compression: maximum

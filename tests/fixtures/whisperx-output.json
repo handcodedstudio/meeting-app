@@ -1,0 +1,21 @@
+{
+  "duration": 12.5,
+  "language": "en",
+  "speakers": ["SPEAKER_00", "SPEAKER_01"],
+  "segments": [
+    { "start": 0.0, "end": 3.4, "speaker": "SPEAKER_00" },
+    { "start": 3.6, "end": 7.2, "speaker": "SPEAKER_01" },
+    { "start": 7.4, "end": 12.0, "speaker": "SPEAKER_00" }
+  ],
+  "words": [
+    { "text": "Hello", "start": 0.0, "end": 0.6, "speaker": "SPEAKER_00", "confidence": 0.97 },
+    { "text": "everyone,", "start": 0.7, "end": 1.4, "speaker": "SPEAKER_00", "confidence": 0.95 },
+    { "text": "welcome.", "start": 1.5, "end": 2.2, "speaker": "SPEAKER_00", "confidence": 0.92 },
+    { "text": "Thanks", "start": 3.6, "end": 4.1, "speaker": "SPEAKER_01", "confidence": 0.93 },
+    { "text": "for", "start": 4.2, "end": 4.5, "speaker": "SPEAKER_01" },
+    { "text": "having", "start": 4.6, "end": 5.0, "speaker": "SPEAKER_01", "confidence": 0.9 },
+    { "text": "me.", "start": 5.1, "end": 5.5, "confidence": 0.88 },
+    { "text": "OK", "start": 7.4, "end": 7.7, "speaker": "SPEAKER_00", "confidence": 0.94 },
+    { "text": "great.", "start": 7.5, "end": 8.2, "speaker": "SPEAKER_00", "confidence": 0.91 }
+  ]
+}

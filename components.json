@@ -1,0 +1,20 @@
+{
+  "$schema": "https://shadcn-vue.com/schema.json",
+  "style": "default",
+  "typescript": true,
+  "tsConfigPath": "tsconfig.web.json",
+  "tailwind": {
+    "css": "src/renderer/src/assets/styles.css",
+    "baseColor": "neutral",
+    "cssVariables": true
+  },
+  "framework": "vite",
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@/components",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "utils": "@/lib/utils",
+    "composables": "@/composables"
+  }
+}

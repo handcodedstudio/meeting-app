@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Local Meeting Transcriber</title>
+    <!-- CSP is applied in production via Electron's webRequest.onHeadersReceived (see src/main/index.ts).
+         Setting it via meta in dev would block Vite's HMR runtime, which needs 'unsafe-eval'. -->
+  </head>
+  <body class="bg-background text-foreground">
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

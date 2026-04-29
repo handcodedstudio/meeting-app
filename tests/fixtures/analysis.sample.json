@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "transcriptId": "01HXSAMPLEAAAAAAAAAAAAAAAA",
+  "model": "llama3.1:8b",
+  "generatedAt": "2026-04-28T09:05:00.000Z",
+  "actionItems": [
+    {
+      "id": "ai-1",
+      "description": "Tom ships the API by Friday",
+      "assignee": "Tom",
+      "dueDate": "2026-05-01",
+      "sourceTurnIndex": 1
+    }
+  ],
+  "decisions": [
+    {
+      "id": "d-1",
+      "description": "Standup will continue daily at 9am",
+      "sourceTurnIndex": 0
+    }
+  ],
+  "keyDates": [
+    {
+      "id": "kd-1",
+      "date": "2026-05-01",
+      "description": "API delivery deadline",
+      "sourceTurnIndex": 1
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "oq-1",
+      "description": "Who will review the API design?"
+    }
+  ]
+}

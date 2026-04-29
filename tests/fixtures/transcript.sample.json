@@ -1,0 +1,64 @@
+{
+  "id": "01HXSAMPLEAAAAAAAAAAAAAAAA",
+  "schemaVersion": 1,
+  "title": "Sample Standup",
+  "sourceFile": {
+    "originalPath": "/tmp/sample.mp3",
+    "importedAt": "2026-04-28T09:00:00.000Z",
+    "sizeBytes": 1024,
+    "mime": "audio/mpeg"
+  },
+  "audio": {
+    "durationSec": 65.0,
+    "sampleRate": 16000
+  },
+  "language": "en",
+  "modelSize": "small.en",
+  "diarization": {
+    "backend": "pyannote-3.1",
+    "minSpeakers": 1,
+    "maxSpeakers": 4
+  },
+  "speakers": [
+    { "id": "SPEAKER_00", "displayName": "Sarah" },
+    { "id": "SPEAKER_01", "displayName": "Tom" }
+  ],
+  "turns": [
+    {
+      "speaker": "SPEAKER_00",
+      "displayName": "Sarah",
+      "start": 0.0,
+      "end": 3.5,
+      "text": "Hello team, let's get started.",
+      "words": [
+        { "text": "Hello", "start": 0.0, "end": 0.5, "speaker": "SPEAKER_00" },
+        { "text": "team,", "start": 0.6, "end": 1.0, "speaker": "SPEAKER_00" },
+        { "text": "let's", "start": 1.1, "end": 1.4, "speaker": "SPEAKER_00" },
+        { "text": "get", "start": 1.5, "end": 1.8, "speaker": "SPEAKER_00" },
+        { "text": "started.", "start": 1.9, "end": 3.5, "speaker": "SPEAKER_00" }
+      ]
+    },
+    {
+      "speaker": "SPEAKER_01",
+      "displayName": "Tom",
+      "start": 4.0,
+      "end": 8.0,
+      "text": "I'll ship the API by Friday.",
+      "words": [
+        { "text": "I'll", "start": 4.0, "end": 4.3, "speaker": "SPEAKER_01" },
+        { "text": "ship", "start": 4.4, "end": 4.7, "speaker": "SPEAKER_01" },
+        { "text": "the", "start": 4.8, "end": 5.0, "speaker": "SPEAKER_01" },
+        { "text": "API", "start": 5.1, "end": 5.6, "speaker": "SPEAKER_01" },
+        { "text": "by", "start": 5.7, "end": 5.9, "speaker": "SPEAKER_01" },
+        { "text": "Friday.", "start": 6.0, "end": 8.0, "speaker": "SPEAKER_01" }
+      ]
+    }
+  ],
+  "stats": {
+    "speakerCount": 2,
+    "wordCount": 11,
+    "turnCount": 2
+  },
+  "createdAt": "2026-04-28T09:00:00.000Z",
+  "updatedAt": "2026-04-28T09:00:00.000Z"
+}
