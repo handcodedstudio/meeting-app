@@ -58,7 +58,7 @@ const wrapperClass = computed(() =>
 </script>
 
 <template>
-  <div :class="wrapperClass" v-bind="bind" @click="browse" role="button" tabindex="0">
+  <div :class="wrapperClass" v-bind="bind" role="button" tabindex="0" @click="browse">
     <UploadCloud class="h-8 w-8 text-muted-foreground" />
     <p class="text-sm font-medium">{{ props.message ?? 'Drop audio to transcribe' }}</p>
     <p class="text-xs text-muted-foreground">

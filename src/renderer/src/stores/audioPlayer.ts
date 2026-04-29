@@ -42,7 +42,7 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
     const reason = msg || (code ? `MediaError code ${code}` : 'unknown');
     error.value = `Audio could not be loaded: ${reason}`;
     playing.value = false;
-    // eslint-disable-next-line no-console
+     
     console.error('[audioPlayer] error', { src: audio.src, code, msg });
   });
 
@@ -59,7 +59,7 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
         }
       } catch (e) {
         error.value = e instanceof Error ? e.message : String(e);
-        // eslint-disable-next-line no-console
+         
         console.error('[audioPlayer] media probe failed', e);
         throw e;
       }
@@ -101,7 +101,7 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
       await audio.play();
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
-      // eslint-disable-next-line no-console
+       
       console.error('[audioPlayer] play() failed', e);
     }
   }

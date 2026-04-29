@@ -29,7 +29,7 @@ const currentIdx = computed(() => STAGES.findIndex((s) => s.id === props.stage))
         :class="cn(
           'flex-1 text-xs px-2 py-1 rounded-md text-center transition-colors',
           idx < currentIdx ? 'bg-primary/20 text-foreground'
-            : idx === currentIdx ? 'bg-primary text-primary-foreground'
+          : idx === currentIdx ? 'bg-primary text-primary-foreground'
             : 'bg-muted text-muted-foreground'
         )"
       >
