@@ -2,14 +2,13 @@ import type { Dirent } from 'node:fs';
 import { readdir, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
-  getPyannoteCacheDir,
-  getPythonRoot,
+  getDiarizationModelDir,
   getWhisperRoot,
   isResourceRemovable
 } from './paths.js';
 import { logger } from './logger.js';
 
-export type ResourceKind = 'pyannote' | 'whisper' | 'python';
+export type ResourceKind = 'whisper' | 'diarization';
 
 export interface ResourceInfo {
   kind: ResourceKind;
@@ -57,13 +56,18 @@ async function dirSize(dir: string): Promise<number> {
 
 function describe(kind: ResourceKind): { label: string; path: string; alwaysRemovable: boolean } {
   switch (kind) {
-    case 'pyannote':
-      // Always under userData and always safe to remove (re-downloaded on next transcribe).
-      return { label: 'Speaker diarization (pyannote)', path: getPyannoteCacheDir(), alwaysRemovable: true };
     case 'whisper':
-      return { label: 'Whisper transcription model', path: getWhisperRoot(), alwaysRemovable: false };
-    case 'python':
-      return { label: 'Python sidecar runtime', path: getPythonRoot(), alwaysRemovable: false };
+      return {
+        label: 'Whisper transcription model',
+        path: getWhisperRoot(),
+        alwaysRemovable: false
+      };
+    case 'diarization':
+      return {
+        label: 'Speaker diarization models',
+        path: getDiarizationModelDir(),
+        alwaysRemovable: false
+      };
   }
 }
 
@@ -81,7 +85,7 @@ async function infoFor(kind: ResourceKind): Promise<ResourceInfo> {
 }
 
 export async function listResources(): Promise<ResourceInfo[]> {
-  return Promise.all((['pyannote', 'whisper', 'python'] as const).map((k) => infoFor(k)));
+  return Promise.all((['whisper', 'diarization'] as const).map((k) => infoFor(k)));
 }
 
 export async function deleteResource(kind: ResourceKind): Promise<ResourceInfo> {

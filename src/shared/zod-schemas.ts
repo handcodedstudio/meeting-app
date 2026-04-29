@@ -39,7 +39,7 @@ export const transcriptSchema = z.object({
   language: z.string(),
   modelSize: z.string(),
   diarization: z.object({
-    backend: z.literal('pyannote-3.1'),
+    backend: z.enum(['sherpa-onnx-pyannote3+titanet', 'pyannote-3.1']),
     minSpeakers: z.number().optional(),
     maxSpeakers: z.number().optional()
   }),
@@ -94,6 +94,5 @@ export const settingsSchema = z.object({
   whisperModelSize: z.string(),
   language: z.enum(['en', 'auto']),
   theme: z.enum(['system', 'light', 'dark']),
-  autoPullOllamaModel: z.boolean(),
-  huggingfaceToken: z.string().optional()
+  autoPullOllamaModel: z.boolean()
 });

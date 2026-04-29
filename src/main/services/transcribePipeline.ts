@@ -1,11 +1,9 @@
-import { spawn } from 'node:child_process';
 import { stat } from 'node:fs/promises';
 import { basename, extname } from 'node:path';
 import { ulid } from 'ulid';
 import type { WebContents } from 'electron';
 import { IPC } from '@shared/ipc-channels';
 import type {
-  PyannoteDownloadProgressPayload,
   TranscribeDonePayload,
   TranscribeErrorPayload,
   TranscribeProgressPayload,
@@ -13,12 +11,17 @@ import type {
 } from '@shared/types/ipc';
 import type { WhisperModelSize } from '@shared/types/transcript';
 import {
-  getPyannoteCacheDir,
-  getWhisperModelDir
+  getDiarizationEmbeddingModel,
+  getDiarizationSegmentationModel,
+  getWhisperModelPath
 } from './paths.js';
-import { getSidecar } from './sidecar.js';
-import { ensurePyannoteWeights } from './modelDownloader.js';
-import { parseWhisperxOutput, type WhisperxRawOutput } from '../parsers/whisperxOutput.js';
+import { decodeToFloat32Pcm } from './audioConvert.js';
+import { runWhisper } from './whisperRunner.js';
+import { diarize } from './diarizer.js';
+import {
+  fuseWordsWithDiarization,
+  parseTranscriptionOutput
+} from '../parsers/whisperOutput.js';
 import { saveTranscript } from './storage.js';
 import { getSettings } from './settings.js';
 import { logger } from './logger.js';
@@ -43,38 +46,6 @@ function mimeFromPath(path: string): string {
   return MIME_BY_EXT[ext] ?? 'application/octet-stream';
 }
 
-async function probeDurationSec(path: string): Promise<number | undefined> {
-  return new Promise((resolve) => {
-    let proc;
-    try {
-      proc = spawn(
-        'ffprobe',
-        ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path],
-        { stdio: ['ignore', 'pipe', 'pipe'] }
-      );
-    } catch (err) {
-      logger.debug('ffprobe spawn failed (not installed?)', String(err));
-      resolve(undefined);
-      return;
-    }
-    let stdout = '';
-    proc.stdout.on('data', (c) => (stdout += c.toString('utf8')));
-    proc.on('error', (err) => {
-      logger.debug('ffprobe error', String(err));
-      resolve(undefined);
-    });
-    proc.on('exit', (code) => {
-      if (code !== 0) {
-        logger.debug('ffprobe exited non-zero', String(code));
-        resolve(undefined);
-        return;
-      }
-      const n = Number(stdout.trim());
-      resolve(Number.isFinite(n) && n > 0 ? n : undefined);
-    });
-  });
-}
-
 function send<T>(sender: WebContents | null, channel: string, payload: T): void {
   if (!sender || sender.isDestroyed()) return;
   try {
@@ -84,16 +55,27 @@ function send<T>(sender: WebContents | null, channel: string, payload: T): void 
   }
 }
 
-function isTranscribeStage(s: string): s is TranscribeStage {
-  return s === 'load' || s === 'transcribe' || s === 'diarize' || s === 'finalize';
-}
-
 export interface RunTranscribeResult {
   transcriptId: string;
 }
 
+const cancelledJobs = new Set<string>();
+
+export function cancelTranscribe(transcriptId: string): void {
+  // Cooperative cancel — checked at stage boundaries. Mid-inference work
+  // (whisper or sherpa) will run to completion of the current segment.
+  cancelledJobs.add(transcriptId);
+}
+
+function checkCancel(transcriptId: string): void {
+  if (cancelledJobs.has(transcriptId)) {
+    cancelledJobs.delete(transcriptId);
+    throw new Error('transcription cancelled');
+  }
+}
+
 /**
- * Kicks off the full pipeline. Returns immediately with the transcriptId; the
+ * Kick off the full pipeline. Returns immediately with the transcriptId; the
  * actual work runs detached and pushes progress / done / error to the renderer.
  */
 export function startTranscribe(
@@ -138,65 +120,51 @@ async function runTranscribeInternal(
       mime: mimeFromPath(filePath)
     };
 
-    emitProgress('load', 0, 'preparing');
+    emitProgress('load', 0, 'decoding audio');
+    const decoded = await decodeToFloat32Pcm(filePath);
+    checkCancel(transcriptId);
 
-    const probedDuration = await probeDurationSec(filePath);
-
-    // Pyannote weights — download on first run.
-    emitProgress('load', 5, 'ensuring pyannote weights');
-    await ensurePyannoteWeights({
-      token: settings.huggingfaceToken,
-      onProgress: (p) => {
-        const payload: PyannoteDownloadProgressPayload = {
-          percent: p.percent,
-          status: p.status
-        };
-        send(sender, IPC.PYANNOTE_DOWNLOAD_PROGRESS, payload);
-      }
+    emitProgress('transcribe', 0, 'running whisper');
+    const whisperOut = await runWhisper({
+      modelPath: getWhisperModelPath(modelSize),
+      samples: decoded.samples,
+      language: settings.language === 'auto' ? undefined : settings.language,
+      onProgress: (pct) => emitProgress('transcribe', pct)
     });
+    checkCancel(transcriptId);
 
-    emitProgress('load', 50, 'starting sidecar');
-    const sidecar = getSidecar();
-    await sidecar.start();
-    emitProgress('load', 100, 'sidecar ready');
+    emitProgress('diarize', 0, 'running diarization');
+    const segments = await diarize(decoded.samples, {
+      segmentationModel: getDiarizationSegmentationModel(),
+      embeddingModel: getDiarizationEmbeddingModel()
+    });
+    emitProgress('diarize', 90, `${new Set(segments.map((s) => s.speaker)).size} speakers detected`);
+    checkCancel(transcriptId);
 
-    const whisperModelDir = getWhisperModelDir(modelSize);
-    const pyannoteCacheDir = getPyannoteCacheDir();
-
-    const raw = await sidecar.call<WhisperxRawOutput>(
-      'transcribe',
-      {
-        audioPath: filePath,
-        modelSize,
-        whisperModelDir,
-        pyannoteCacheDir,
-        hfToken: settings.huggingfaceToken,
-        jobId: transcriptId
-      },
-      {
-        onProgress: (sidecarStage, percent, message) => {
-          if (isTranscribeStage(sidecarStage)) {
-            emitProgress(sidecarStage, percent, message);
-          }
-        }
-      }
-    );
-
-    emitProgress('finalize', 50, 'building transcript');
+    emitProgress('finalize', 30, 'fusing speakers');
+    const fusedWords = fuseWordsWithDiarization(whisperOut.words, segments);
 
     const createdAt = new Date().toISOString();
     const title = opts.title ?? basename(filePath, extname(filePath));
-    const transcript = parseWhisperxOutput(raw, {
-      id: transcriptId,
-      title,
-      modelSize,
-      sourceFile,
-      createdAt,
-      durationSecOverride: probedDuration
-    });
+    const transcript = parseTranscriptionOutput(
+      {
+        duration: decoded.durationSec,
+        language: whisperOut.language,
+        words: fusedWords
+      },
+      {
+        id: transcriptId,
+        title,
+        modelSize,
+        sourceFile,
+        createdAt,
+        sampleRate: decoded.sampleRate
+      }
+    );
 
+    emitProgress('finalize', 80, 'saving');
     const saved = await saveTranscript(transcript);
-    emitProgress('finalize', 100, 'saved');
+    emitProgress('finalize', 100, 'done');
 
     const donePayload: TranscribeDonePayload = { transcriptId, transcript: saved };
     send(sender, IPC.TRANSCRIBE_DONE, donePayload);
@@ -205,5 +173,7 @@ async function runTranscribeInternal(
     logger.error('transcribe pipeline error', { transcriptId, stage, message });
     const payload: TranscribeErrorPayload = { transcriptId, stage, error: message };
     send(sender, IPC.TRANSCRIBE_ERROR, payload);
+  } finally {
+    cancelledJobs.delete(transcriptId);
   }
 }

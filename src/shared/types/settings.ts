@@ -8,8 +8,6 @@ export interface AppSettings {
   language: 'en' | 'auto';
   theme: 'system' | 'light' | 'dark';
   autoPullOllamaModel: boolean;
-  /** HuggingFace token used to download gated pyannote weights on first run. */
-  huggingfaceToken?: string;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {

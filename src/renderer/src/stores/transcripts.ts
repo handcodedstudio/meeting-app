@@ -75,6 +75,10 @@ export const useTranscriptsStore = defineStore('transcripts', () => {
 
   const dispose = useIpcSubscriptions((api) => [api.onTranscribeDone(() => refresh())]);
 
+  // HMR cleanup MUST live in this module so import.meta.hot resolves to the
+  // store's hot record. See useIpcSubscriptions for the rationale.
+  if (import.meta.hot) import.meta.hot.dispose(dispose);
+
   return {
     summaries,
     loading,

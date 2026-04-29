@@ -2,23 +2,28 @@
 
 Offline-first macOS Electron app for meeting transcription, diarization, and analysis. Drop in audio, get a speaker-diarized transcript, run Analyze to extract action items / decisions / dates / open questions, and chat with the transcript. Everything runs on-device.
 
-- Transcription + diarization: WhisperX (faster-whisper + pyannote 3.1) running in a Python sidecar over stdio JSON-RPC.
+- Transcription: [whisper.cpp](https://github.com/ggerganov/whisper.cpp) via the [`smart-whisper`](https://www.npmjs.com/package/smart-whisper) Node binding (GGML model, native arm64).
+- Speaker diarization: [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) via [`sherpa-onnx-node`](https://www.npmjs.com/package/sherpa-onnx-node) (pyannote-3.0 segmentation + NeMo TitaNet embeddings, all ONNX).
 - LLM analysis + chat: [Ollama](https://ollama.com) at `http://localhost:11434`, default model `llama3.1:8b`.
+- All-Node — no Python, no sidecar process. ~1.5 GB peak memory on a 30-min meeting.
 - Persistence: JSON files under your user-data directory. No cloud, no telemetry.
 
 ## Prerequisites
 
 - macOS Apple Silicon (arm64). Intel Macs aren't built in v1 — see "Architecture" below.
 - Node.js 20.18+ (`nvm use` honors `.nvmrc`).
-- [Ollama](https://ollama.com) installed and the configured model pulled:
+- Xcode Command Line Tools (clang). `smart-whisper` builds whisper.cpp natively at install.
+- [`ffmpeg`](https://ffmpeg.org) on `PATH` for decoding non-WAV inputs:
+  ```bash
+  brew install ffmpeg
+  ```
+- [Ollama](https://ollama.com) for analysis and chat:
   ```bash
   brew install ollama
   ollama serve            # background process
   ollama pull llama3.1:8b
   ```
   The app detects Ollama at startup; if it isn't running or the configured model isn't pulled, an in-app banner walks you through it.
-- A free [HuggingFace](https://huggingface.co/join) account, with the [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1) license accepted, and a [user access token](https://huggingface.co/settings/tokens). Required once on first transcribe to download the gated diarization weights.
-- For development builds only: `python3` 3.12 and a working clang toolchain (Xcode Command Line Tools). Production builds vendor their own Python.
 
 ## Install
 
@@ -77,13 +82,20 @@ The bundled Python tree is re-signed by `scripts/postbuild-codesign.cjs` (electr
 ~/Library/Application Support/Local Meeting Transcriber/
 ├── settings.json
 ├── logs/
-├── models/
-│   └── pyannote/                      # downloaded on first transcribe
 └── transcripts/
     └── <ulid>/
         ├── transcript.json
         ├── analysis.json
         └── chat.json
+```
+
+Models are bundled with the app and live next to the source in `resources/models/`:
+
+```
+resources/models/
+├── whisper/ggml-small.en.bin           # whisper.cpp GGML model
+└── diarization/segmentation.onnx       # sherpa-onnx pyannote-3.0
+└── diarization/embedding.onnx          # sherpa-onnx NeMo TitaNet
 ```
 
 **Open in Finder** from Settings → "Open transcripts folder", or `cmd-click` the latest entry in the Library list.

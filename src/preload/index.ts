@@ -27,9 +27,6 @@ const api: RendererApi = {
   ollamaHealth: () => ipcRenderer.invoke(IPC.OLLAMA_HEALTH),
   ollamaPullModel: (req) => ipcRenderer.invoke(IPC.OLLAMA_PULL_MODEL, req),
 
-  sidecarHealth: () => ipcRenderer.invoke(IPC.SIDECAR_HEALTH),
-  pyannoteEnsure: () => ipcRenderer.invoke(IPC.PYANNOTE_ENSURE),
-
   resourcesList: () => ipcRenderer.invoke(IPC.RESOURCES_LIST),
   resourcesDelete: (req) => ipcRenderer.invoke(IPC.RESOURCES_DELETE, req),
 
@@ -45,8 +42,7 @@ const api: RendererApi = {
   onTranscribeError: (cb) => subscribe(IPC.TRANSCRIBE_ERROR, cb),
   onChatChunk: (cb) => subscribe(IPC.CHAT_CHUNK, cb),
   onChatError: (cb) => subscribe(IPC.CHAT_ERROR, cb),
-  onOllamaPullProgress: (cb) => subscribe(IPC.OLLAMA_PULL_PROGRESS, cb),
-  onPyannoteDownloadProgress: (cb) => subscribe(IPC.PYANNOTE_DOWNLOAD_PROGRESS, cb)
+  onOllamaPullProgress: (cb) => subscribe(IPC.OLLAMA_PULL_PROGRESS, cb)
 };
 
 contextBridge.exposeInMainWorld('api', api);

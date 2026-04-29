@@ -7,7 +7,9 @@ directories:
 
 asar: true
 asarUnpack:
-  - resources/python/**
+  # Native bindings (.node) and dylibs must live outside the asar archive.
+  - "**/*.node"
+  - "**/*.dylib"
   - resources/models/**
 
 files:
@@ -15,12 +17,6 @@ files:
   - package.json
 
 extraResources:
-  - from: resources/python
-    to: python
-    filter:
-      - "**/*"
-      - "!**/__pycache__/**"
-      - "!**/*.pyc"
   - from: resources/models
     to: models
     filter:
@@ -41,8 +37,6 @@ mac:
 dmg:
   writeUpdateInfo: false
   artifactName: "${productName}-${version}-${arch}.dmg"
-
-afterPack: scripts/postbuild-codesign.cjs
 
 publish: null
 

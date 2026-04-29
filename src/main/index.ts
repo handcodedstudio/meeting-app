@@ -9,7 +9,6 @@ const isDev = !!process.env.ELECTRON_RENDERER_URL;
 if (isDev) process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 
 import { registerIpcHandlers } from './ipc/index.js';
-import { getSidecar } from './services/sidecar.js';
 import { logger } from './services/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -103,15 +102,6 @@ void app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
-});
-
-app.on('before-quit', () => {
-  // Tear down the long-lived Python child so it doesn't outlive the app.
-  try {
-    getSidecar().dispose();
-  } catch (err) {
-    logger.warn('sidecar dispose on quit failed', String(err));
-  }
 });
 
 process.on('uncaughtException', (err) => {

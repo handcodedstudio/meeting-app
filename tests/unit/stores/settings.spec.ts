@@ -26,15 +26,14 @@ describe('useSettingsStore', () => {
     const fromMain: AppSettings = {
       ...DEFAULT_SETTINGS,
       ollamaUrl: 'http://localhost:11434',
-      ollamaModel: 'llama3.1:8b',
-      huggingfaceToken: 'hf_xxx'
+      ollamaModel: 'llama3.1:8b'
     };
     installApi({ settingsGet: vi.fn().mockResolvedValue(fromMain) });
     const { useSettingsStore } = await import('../../../src/renderer/src/stores/settings');
     const store = useSettingsStore();
     await store.load();
     expect(store.settings.ollamaUrl).toBe('http://localhost:11434');
-    expect(store.settings.huggingfaceToken).toBe('hf_xxx');
+    expect(store.settings.ollamaModel).toBe('llama3.1:8b');
     expect(store.error).toBeNull();
   });
 

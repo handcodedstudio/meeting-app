@@ -10,7 +10,6 @@ import UploadDropzone from '@/components/UploadDropzone.vue';
 import LibraryList from '@/components/LibraryList.vue';
 import ProgressStages from '@/components/ProgressStages.vue';
 import OllamaSetupBanner from '@/components/OllamaSetupBanner.vue';
-import PyannoteSetupBanner from '@/components/PyannoteSetupBanner.vue';
 import Button from '@/components/ui/Button.vue';
 import { X } from 'lucide-vue-next';
 
@@ -32,20 +31,6 @@ onMounted(async () => {
 });
 
 async function handleFile(filePath: string) {
-  if (!system.pyannote.ready) {
-    try {
-      const ready = await system.ensurePyannote();
-      if (!ready) {
-        errorToast(
-          'Speaker diarization not ready',
-          'Provide a HuggingFace token in Settings to download pyannote weights.'
-        );
-        return;
-      }
-    } catch {
-      return;
-    }
-  }
   const id = await active.startTranscribe(filePath);
   if (!id) {
     errorToast('Could not start transcription', active.error ?? 'Unknown error');
@@ -76,7 +61,6 @@ function cancel() {
   <section class="h-full overflow-y-auto px-6 py-6">
     <div class="mx-auto max-w-4xl space-y-6">
       <OllamaSetupBanner />
-      <PyannoteSetupBanner />
 
       <UploadDropzone :disabled="!!active.transcribingId" @file="handleFile" />
 

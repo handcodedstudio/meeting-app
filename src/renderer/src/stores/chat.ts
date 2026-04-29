@@ -148,6 +148,8 @@ export const useChatStore = defineStore('chat', () => {
     })
   ]);
 
+  if (import.meta.hot) import.meta.hot.dispose(dispose);
+
   return {
     entries,
     get,

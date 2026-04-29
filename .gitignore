@@ -7,22 +7,9 @@ dist/
 .vite/
 
 # Bundled at build time, never committed
-resources/python/bin/
-resources/python/lib/
-resources/python/include/
-resources/python/share/
-resources/python/install/
-resources/python/.installed
 resources/models/whisper/
-resources/models/pyannote/
+resources/models/diarization/
 resources/models/.installed
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-.venv/
-*.egg-info/
 
 # IDE
 .vscode/

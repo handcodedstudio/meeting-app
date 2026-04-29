@@ -3,7 +3,6 @@ import { registerTranscribeHandlers } from './transcribe.js';
 import { registerAnalyzeHandlers } from './analyze.js';
 import { registerChatHandlers } from './chat.js';
 import { registerOllamaHandlers } from './ollama.js';
-import { registerSidecarHandlers } from './sidecar.js';
 import { registerSettingsHandlers } from './settings.js';
 import { registerFsHandlers } from './fs.js';
 import { registerResourcesHandlers } from './resources.js';
@@ -15,7 +14,6 @@ export function registerIpcHandlers(): void {
   registerAnalyzeHandlers();
   registerChatHandlers();
   registerOllamaHandlers();
-  registerSidecarHandlers();
   registerSettingsHandlers();
   registerFsHandlers();
   registerResourcesHandlers();

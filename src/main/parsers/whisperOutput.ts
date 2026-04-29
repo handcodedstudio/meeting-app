@@ -1,4 +1,5 @@
 import type {
+  DiarizationBackend,
   SpeakerEntry,
   SpeakerTurn,
   Transcript,
@@ -8,7 +9,7 @@ import type {
   Word
 } from '@shared/types/transcript';
 
-export interface WhisperxRawWord {
+export interface RawWord {
   text: string;
   start: number;
   end: number;
@@ -16,15 +17,19 @@ export interface WhisperxRawWord {
   speaker?: string;
 }
 
-export interface WhisperxRawOutput {
-  duration: number;
-  language: string;
-  words: WhisperxRawWord[];
-  speakers?: string[];
-  segments?: Array<{ start: number; end: number; speaker: string }>;
+export interface RawDiarSegment {
+  start: number;
+  end: number;
+  speaker: number | string;
 }
 
-export interface WhisperxParseMeta {
+export interface RawTranscriptionOutput {
+  duration: number;
+  language: string;
+  words: RawWord[];
+}
+
+export interface ParseMeta {
   id: string;
   title: string;
   modelSize: WhisperModelSize;
@@ -32,14 +37,72 @@ export interface WhisperxParseMeta {
   createdAt: string;
   /** Max gap (seconds) between consecutive same-speaker words before a turn break. */
   turnBreakSec?: number;
-  /** Override for audio.durationSec if the caller has a more accurate value (e.g. ffprobe). */
+  /** Override for audio.durationSec if the caller has a more accurate value. */
   durationSecOverride?: number;
   sampleRate?: number;
+  diarizationBackend?: DiarizationBackend;
 }
 
 const DEFAULT_TURN_BREAK_SEC = 1.0;
 
-function normaliseWord(raw: WhisperxRawWord): Word {
+/**
+ * Tag every word with the speaker label of the diarization segment it falls
+ * inside, choosing by midpoint. Words that don't overlap any segment fall back
+ * to the nearest segment by edge distance, and an empty diarization defaults
+ * everything to SPEAKER_00.
+ */
+export function fuseWordsWithDiarization(
+  words: RawWord[],
+  segments: RawDiarSegment[]
+): RawWord[] {
+  if (segments.length === 0) {
+    return words.map((w) => ({ ...w, speaker: 'SPEAKER_00' }));
+  }
+  // Pre-format speaker labels and sort segments by start.
+  const sorted = [...segments]
+    .map((s) => ({
+      start: Number(s.start) || 0,
+      end: Number(s.end) || 0,
+      speaker: formatSpeakerId(s.speaker)
+    }))
+    .filter((s) => s.end > s.start)
+    .sort((a, b) => a.start - b.start);
+
+  let cursor = 0;
+  return words.map((w) => {
+    const mid = (w.start + w.end) / 2;
+    while (cursor + 1 < sorted.length && sorted[cursor + 1]!.start <= mid) cursor++;
+    const here = sorted[cursor]!;
+    let chosen = here;
+    if (mid < here.start || mid > here.end) {
+      // Pick whichever neighbour edge is closer.
+      const prev = sorted[cursor - 1];
+      const next = sorted[cursor + 1];
+      const dist = (s: typeof here) =>
+        mid < s.start ? s.start - mid : mid > s.end ? mid - s.end : 0;
+      let best = here;
+      let bestD = dist(here);
+      if (prev && dist(prev) < bestD) {
+        best = prev;
+        bestD = dist(prev);
+      }
+      if (next && dist(next) < bestD) {
+        best = next;
+      }
+      chosen = best;
+    }
+    return { ...w, speaker: chosen.speaker };
+  });
+}
+
+function formatSpeakerId(raw: number | string): string {
+  if (typeof raw === 'string') return raw;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return 'SPEAKER_00';
+  return `SPEAKER_${String(Math.max(0, Math.floor(n))).padStart(2, '0')}`;
+}
+
+function normaliseWord(raw: RawWord): Word {
   const word: Word = {
     text: raw.text,
     start: Number(raw.start) || 0,
@@ -103,14 +166,13 @@ function turnsFromWords(
   return turns;
 }
 
-export function parseWhisperxOutput(
-  raw: WhisperxRawOutput,
-  meta: WhisperxParseMeta
+export function parseTranscriptionOutput(
+  raw: RawTranscriptionOutput,
+  meta: ParseMeta
 ): Transcript {
   const turnBreakSec = meta.turnBreakSec ?? DEFAULT_TURN_BREAK_SEC;
   const words = (raw.words ?? []).map(normaliseWord);
 
-  // Order speakers by first appearance in the word stream.
   const orderedSpeakers: string[] = [];
   const seen = new Set<string>();
   for (const w of words) {
@@ -149,7 +211,7 @@ export function parseWhisperxOutput(
     },
     language: raw.language || 'en',
     modelSize: meta.modelSize,
-    diarization: { backend: 'pyannote-3.1' },
+    diarization: { backend: meta.diarizationBackend ?? 'sherpa-onnx-pyannote3+titanet' },
     speakers,
     turns,
     stats,

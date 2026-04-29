@@ -94,6 +94,8 @@ export const useActiveTranscriptStore = defineStore('activeTranscript', () => {
     })
   ]);
 
+  if (import.meta.hot) import.meta.hot.dispose(dispose);
+
   return {
     transcript,
     progress,

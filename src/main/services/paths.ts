@@ -9,24 +9,26 @@ function resourcesRoot(): string {
   return app.isPackaged ? process.resourcesPath : join(process.cwd(), 'resources');
 }
 
-export function getPythonExecutable(): string {
-  return join(resourcesRoot(), 'python', 'bin', 'python');
-}
-
-export function getSidecarSourceDir(): string {
-  return join(resourcesRoot(), 'python', 'app');
-}
-
-export function getWhisperModelDir(size: WhisperModelSize): string {
-  return join(resourcesRoot(), 'models', 'whisper', size);
+export function getWhisperModelPath(size: WhisperModelSize): string {
+  // smart-whisper expects a single .bin GGML file. We keep them flat under
+  // resources/models/whisper/.
+  return join(resourcesRoot(), 'models', 'whisper', `ggml-${size}.bin`);
 }
 
 export function getWhisperRoot(): string {
   return join(resourcesRoot(), 'models', 'whisper');
 }
 
-export function getPythonRoot(): string {
-  return join(resourcesRoot(), 'python');
+export function getDiarizationModelDir(): string {
+  return join(resourcesRoot(), 'models', 'diarization');
+}
+
+export function getDiarizationSegmentationModel(): string {
+  return join(getDiarizationModelDir(), 'segmentation.onnx');
+}
+
+export function getDiarizationEmbeddingModel(): string {
+  return join(getDiarizationModelDir(), 'embedding.onnx');
 }
 
 export function isResourceRemovable(): boolean {
@@ -41,10 +43,6 @@ export function getTranscriptsDir(): string {
 
 export function getTranscriptDir(id: string): string {
   return join(getTranscriptsDir(), id);
-}
-
-export function getPyannoteCacheDir(): string {
-  return join(app.getPath('userData'), 'models', 'pyannote');
 }
 
 export function getSettingsPath(): string {

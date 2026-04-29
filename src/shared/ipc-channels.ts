@@ -13,8 +13,6 @@ export const IPC = {
   CHAT_CLEAR: 'chat:clear',
   OLLAMA_HEALTH: 'ollama:health',
   OLLAMA_PULL_MODEL: 'ollama:pullModel',
-  SIDECAR_HEALTH: 'sidecar:health',
-  PYANNOTE_ENSURE: 'pyannote:ensure',
   RESOURCES_LIST: 'resources:list',
   RESOURCES_DELETE: 'resources:delete',
   SETTINGS_GET: 'settings:get',
@@ -27,8 +25,7 @@ export const IPC = {
   TRANSCRIBE_ERROR: 'transcribe:error',
   CHAT_CHUNK: 'chat:chunk',
   CHAT_ERROR: 'chat:error',
-  OLLAMA_PULL_PROGRESS: 'ollama:pullProgress',
-  PYANNOTE_DOWNLOAD_PROGRESS: 'pyannote:downloadProgress'
+  OLLAMA_PULL_PROGRESS: 'ollama:pullProgress'
 } as const;
 
 export type IpcChannel = (typeof IPC)[keyof typeof IPC];

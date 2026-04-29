@@ -34,8 +34,10 @@ export interface TranscriptAudio {
   sampleRate?: number;
 }
 
+export type DiarizationBackend = 'sherpa-onnx-pyannote3+titanet' | 'pyannote-3.1';
+
 export interface TranscriptDiarization {
-  backend: 'pyannote-3.1';
+  backend: DiarizationBackend;
   minSpeakers?: number;
   maxSpeakers?: number;
 }

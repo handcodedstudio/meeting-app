@@ -66,19 +66,7 @@ export interface OllamaPullReq {
   model: string;
 }
 
-export interface SidecarHealth {
-  ready: boolean;
-  pythonVersion?: string;
-  whisperxVersion?: string;
-  error?: string;
-}
-
-export interface PyannoteEnsureRes {
-  ready: boolean;
-  cachedAt?: string;
-}
-
-export type ResourceKind = 'pyannote' | 'whisper' | 'python';
+export type ResourceKind = 'whisper' | 'diarization';
 
 export interface ResourceInfo {
   kind: ResourceKind;
@@ -131,10 +119,6 @@ export interface OllamaPullProgressPayload {
   percent: number;
   status: string;
 }
-export interface PyannoteDownloadProgressPayload {
-  percent: number;
-  status: string;
-}
 
 // The full window.api surface that preload exposes to the renderer.
 export interface RendererApi {
@@ -155,9 +139,6 @@ export interface RendererApi {
 
   ollamaHealth: () => Promise<OllamaHealth>;
   ollamaPullModel: (req: OllamaPullReq) => Promise<OkRes>;
-
-  sidecarHealth: () => Promise<SidecarHealth>;
-  pyannoteEnsure: () => Promise<PyannoteEnsureRes>;
 
   resourcesList: () => Promise<ResourceInfo[]>;
   resourcesDelete: (req: ResourcesDeleteReq) => Promise<ResourceInfo>;
@@ -181,5 +162,4 @@ export interface RendererApi {
   onChatChunk: (cb: (p: ChatChunkPayload) => void) => () => void;
   onChatError: (cb: (p: ChatErrorPayload) => void) => () => void;
   onOllamaPullProgress: (cb: (p: OllamaPullProgressPayload) => void) => () => void;
-  onPyannoteDownloadProgress: (cb: (p: PyannoteDownloadProgressPayload) => void) => () => void;
 }

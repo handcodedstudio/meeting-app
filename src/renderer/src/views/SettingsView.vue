@@ -33,7 +33,6 @@ const draft = reactive<{
   whisperModelSize: WhisperModelSize;
   language: AppSettings['language'];
   theme: AppSettings['theme'];
-  huggingfaceToken: string;
   autoPullOllamaModel: boolean;
 }>({
   ollamaUrl: '',
@@ -41,7 +40,6 @@ const draft = reactive<{
   whisperModelSize: 'small.en',
   language: 'en',
   theme: 'system',
-  huggingfaceToken: '',
   autoPullOllamaModel: true
 });
 
@@ -70,18 +68,13 @@ async function deleteResource(r: ResourceInfo) {
   if (!r.exists) return;
   const ok = window.confirm(
     `Delete ${r.label}?\n\n${r.path}\n\nFrees ${formatBytes(r.sizeBytes)}. ` +
-      (r.kind === 'pyannote'
-        ? 'Will be re-downloaded on next transcribe.'
-        : 'Re-run "npm run fetch:resources" to restore.')
+      'Re-run "npm run fetch:resources" to restore.'
   );
   if (!ok) return;
   resourcesDeleting.value = r.kind;
   try {
     const updated = await window.api.resourcesDelete({ kind: r.kind });
     resources.value = resources.value.map((x) => (x.kind === r.kind ? updated : x));
-    if (r.kind === 'pyannote') {
-      await system.pollAll();
-    }
     success(`${r.label} deleted`);
   } catch (e) {
     errorToast('Delete failed', e instanceof Error ? e.message : String(e));
@@ -107,7 +100,6 @@ function syncDraftFromStore() {
   draft.whisperModelSize = s.whisperModelSize;
   draft.language = s.language;
   draft.theme = s.theme;
-  draft.huggingfaceToken = s.huggingfaceToken ?? '';
   draft.autoPullOllamaModel = s.autoPullOllamaModel;
 }
 
@@ -125,7 +117,6 @@ const dirty = computed(() => {
     draft.whisperModelSize !== s.whisperModelSize ||
     draft.language !== s.language ||
     draft.theme !== s.theme ||
-    (draft.huggingfaceToken || '') !== (s.huggingfaceToken ?? '') ||
     draft.autoPullOllamaModel !== s.autoPullOllamaModel
   );
 });
@@ -139,7 +130,6 @@ async function saveAll() {
       whisperModelSize: draft.whisperModelSize,
       language: draft.language,
       theme: draft.theme,
-      huggingfaceToken: draft.huggingfaceToken.trim() || undefined,
       autoPullOllamaModel: draft.autoPullOllamaModel
     });
     success('Settings saved');
@@ -282,20 +272,6 @@ function back() {
               <option value="en">English</option>
               <option value="auto">Auto-detect</option>
             </select>
-          </div>
-
-          <div class="space-y-1.5">
-            <Label for="hf-token">HuggingFace token</Label>
-            <Input
-              id="hf-token"
-              v-model="draft.huggingfaceToken"
-              type="password"
-              placeholder="hf_..."
-              @blur="saveField({ huggingfaceToken: draft.huggingfaceToken.trim() || undefined })"
-            />
-            <p class="text-xs text-muted-foreground">
-              Required to download pyannote speaker-diarization weights on first run.
-            </p>
           </div>
         </CardContent>
       </Card>
