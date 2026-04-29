@@ -5,15 +5,17 @@ import Card from './ui/Card.vue';
 import CardHeader from './ui/CardHeader.vue';
 import CardTitle from './ui/CardTitle.vue';
 import CardContent from './ui/CardContent.vue';
-import CopyButton from './CopyButton.vue';
+import CopyMenu from './CopyMenu.vue';
 import { ListChecks, Gavel, CalendarClock, HelpCircle } from 'lucide-vue-next';
 
 const props = defineProps<{ analysis: Analysis }>();
+const emit = defineEmits<{ (e: 'jump', sourceTurnIndex: number): void }>();
 
 interface ListItem {
   id: string;
   description: string;
   meta?: string;
+  sourceTurnIndex?: number;
 }
 
 interface Section {
@@ -31,14 +33,19 @@ const sections = computed<Section[]>(() => [
     items: props.analysis.actionItems.map((a) => ({
       id: a.id,
       description: a.description,
-      meta: [a.assignee, a.dueDate].filter(Boolean).join(' · ') || undefined
+      meta: [a.assignee, a.dueDate].filter(Boolean).join(' · ') || undefined,
+      sourceTurnIndex: a.sourceTurnIndex
     }))
   },
   {
     title: 'Decisions',
     icon: Gavel,
     emptyHint: 'No decisions detected.',
-    items: props.analysis.decisions.map((d) => ({ id: d.id, description: d.description }))
+    items: props.analysis.decisions.map((d) => ({
+      id: d.id,
+      description: d.description,
+      sourceTurnIndex: d.sourceTurnIndex
+    }))
   },
   {
     title: 'Key dates',
@@ -47,14 +54,19 @@ const sections = computed<Section[]>(() => [
     items: props.analysis.keyDates.map((k) => ({
       id: k.id,
       description: k.description,
-      meta: k.date
+      meta: k.date,
+      sourceTurnIndex: k.sourceTurnIndex
     }))
   },
   {
     title: 'Open questions',
     icon: HelpCircle,
     emptyHint: 'No open questions detected.',
-    items: props.analysis.openQuestions.map((q) => ({ id: q.id, description: q.description }))
+    items: props.analysis.openQuestions.map((q) => ({
+      id: q.id,
+      description: q.description,
+      sourceTurnIndex: q.sourceTurnIndex
+    }))
   }
 ]);
 
@@ -65,6 +77,18 @@ function sectionMarkdown(section: Section): string {
     return `- ${it.description}${meta}`;
   });
   return `## ${section.title}\n\n${lines.join('\n')}`;
+}
+
+function sectionJson(section: Section): string {
+  return JSON.stringify(
+    section.items.map((i) => ({
+      description: i.description,
+      meta: i.meta,
+      sourceTurnIndex: i.sourceTurnIndex
+    })),
+    null,
+    2
+  );
 }
 </script>
 
@@ -79,17 +103,34 @@ function sectionMarkdown(section: Section): string {
             ({{ section.items.length }})
           </span>
         </CardTitle>
-        <CopyButton :text="sectionMarkdown(section)" />
+        <CopyMenu
+          :options="[
+            { label: 'Markdown', value: sectionMarkdown(section) },
+            { label: 'JSON', value: sectionJson(section) }
+          ]"
+        />
       </CardHeader>
       <CardContent>
         <p v-if="section.items.length === 0" class="text-xs text-muted-foreground italic">
           {{ section.emptyHint }}
         </p>
         <ul v-else class="space-y-1.5 text-sm">
-          <li v-for="item in section.items" :key="item.id" class="flex flex-col">
-            <span>{{ item.description }}</span>
-            <span v-if="item.meta" class="text-xs text-muted-foreground">{{ item.meta }}</span>
-          </li>
+          <template v-for="item in section.items" :key="item.id">
+            <li v-if="item.sourceTurnIndex !== undefined">
+              <button
+                type="button"
+                class="flex flex-col w-full text-left cursor-pointer hover:bg-muted/50 rounded-sm px-2 -mx-2 transition-colors"
+                @click="emit('jump', item.sourceTurnIndex)"
+              >
+                <span>{{ item.description }}</span>
+                <span v-if="item.meta" class="text-xs text-muted-foreground">{{ item.meta }}</span>
+              </button>
+            </li>
+            <li v-else class="flex flex-col">
+              <span>{{ item.description }}</span>
+              <span v-if="item.meta" class="text-xs text-muted-foreground">{{ item.meta }}</span>
+            </li>
+          </template>
         </ul>
       </CardContent>
     </Card>

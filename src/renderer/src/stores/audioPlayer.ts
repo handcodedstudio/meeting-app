@@ -16,9 +16,11 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
   const playing = ref(false);
   const currentTime = ref(0);
   const duration = ref(0);
+  const playbackRate = ref(1);
   const error = ref<string | null>(null);
 
   const audio = getAudio();
+  audio.playbackRate = playbackRate.value;
   audio.addEventListener('play', () => {
     playing.value = true;
   });
@@ -120,6 +122,18 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
     void play(id, sec);
   }
 
+  function seek(sec: number): void {
+    if (!Number.isFinite(sec)) return;
+    audio.currentTime = Math.max(0, sec);
+    currentTime.value = audio.currentTime;
+  }
+
+  function setPlaybackRate(rate: number): void {
+    if (!Number.isFinite(rate) || rate <= 0) return;
+    audio.playbackRate = rate;
+    playbackRate.value = rate;
+  }
+
   function reset(): void {
     audio.pause();
     audio.removeAttribute('src');
@@ -142,11 +156,14 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
     playing,
     currentTime,
     duration,
+    playbackRate,
     error,
     play,
     pause,
     toggle,
+    seek,
     seekAndPlay,
+    setPlaybackRate,
     reset,
     isActive,
     isPlayingFor

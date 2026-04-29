@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed, watch } from 'vue';
+import { onMounted, computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTranscriptsStore } from '@/stores/transcripts';
 import { useActiveTranscriptStore } from '@/stores/activeTranscript';
@@ -11,6 +11,7 @@ import LibraryList from '@/components/LibraryList.vue';
 import ProgressStages from '@/components/ProgressStages.vue';
 import OllamaSetupBanner from '@/components/OllamaSetupBanner.vue';
 import Button from '@/components/ui/Button.vue';
+import Input from '@/components/ui/Input.vue';
 import { X } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -21,6 +22,14 @@ const settings = useSettingsStore();
 const { error: errorToast, success } = useToast();
 
 const transcribing = computed(() => !!active.transcribingId && active.progress);
+
+const query = ref('');
+
+const filtered = computed(() => {
+  const q = query.value.trim().toLowerCase();
+  if (q === '') return transcripts.summaries;
+  return transcripts.summaries.filter((s) => s.title.toLowerCase().includes(q));
+});
 
 onMounted(async () => {
   await Promise.allSettled([
@@ -90,7 +99,14 @@ function cancel() {
       </div>
 
       <div>
-        <h2 class="mb-3 text-sm font-semibold">Transcripts</h2>
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <h2 class="text-sm font-semibold">Transcripts</h2>
+          <Input
+            v-model="query"
+            placeholder="Search transcripts…"
+            class="max-w-xs"
+          />
+        </div>
         <div
           v-if="transcripts.loading && transcripts.summaries.length === 0"
           class="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground"
@@ -103,7 +119,13 @@ function cancel() {
         >
           No transcripts yet — drop an audio file above.
         </div>
-        <LibraryList v-else :summaries="transcripts.summaries" />
+        <div
+          v-else-if="filtered.length === 0"
+          class="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground"
+        >
+          {{ `No transcripts match \`${query}\`.` }}
+        </div>
+        <LibraryList v-else :summaries="filtered" />
       </div>
     </div>
   </section>

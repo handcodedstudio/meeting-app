@@ -33,6 +33,18 @@ const { error: errorToast, success } = useToast();
 type Tab = 'transcript' | 'analysis' | 'chat';
 const activeTab = ref<Tab>('transcript');
 
+type TranscriptViewExposed = InstanceType<typeof TranscriptView> & {
+  jumpToSourceTurn?: (idx: number) => void;
+};
+const transcriptViewDesktop = ref<TranscriptViewExposed | null>(null);
+const transcriptViewMobile = ref<TranscriptViewExposed | null>(null);
+
+function onJump(sourceTurnIndex: number) {
+  const target = transcriptViewDesktop.value ?? transcriptViewMobile.value;
+  target?.jumpToSourceTurn?.(sourceTurnIndex);
+  activeTab.value = 'transcript';
+}
+
 const editingTitle = ref(false);
 const titleDraft = ref('');
 
@@ -196,8 +208,8 @@ function back() {
         Transcript not found.
       </div>
       <div v-else class="h-full min-h-0">
-        <div class="hidden lg:grid lg:grid-cols-[1fr_1fr_360px] h-full min-h-0">
-          <TranscriptView :transcript="transcript" class="border-r border-border min-h-0" />
+        <div class="hidden lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_360px] h-full min-h-0">
+          <TranscriptView ref="transcriptViewDesktop" :transcript="transcript" class="border-r border-border min-h-0" />
           <section class="flex h-full min-h-0 flex-col border-r border-border">
             <div class="shrink-0 border-b border-border px-4 py-3">
               <h2 class="text-sm font-semibold">Summary</h2>
@@ -216,7 +228,7 @@ function back() {
                   <p class="text-xs text-muted-foreground">{{ analysisEntry.error }}</p>
                   <Button size="sm" variant="outline" @click="runAnalysis">Retry</Button>
                 </div>
-                <AnalysisCards v-else-if="analysisEntry.data" :analysis="analysisEntry.data" />
+                <AnalysisCards v-else-if="analysisEntry.data" :analysis="analysisEntry.data" @jump="onJump" />
               </div>
             </div>
           </section>
@@ -225,7 +237,7 @@ function back() {
 
         <div class="lg:hidden h-full">
           <div v-show="activeTab === 'transcript'" class="h-full">
-            <TranscriptView :transcript="transcript" />
+            <TranscriptView ref="transcriptViewMobile" :transcript="transcript" />
           </div>
           <div v-show="activeTab === 'analysis'" class="h-full overflow-y-auto p-4 space-y-3">
             <OllamaSetupBanner />
@@ -240,7 +252,7 @@ function back() {
               <p class="text-xs text-muted-foreground">{{ analysisEntry.error }}</p>
               <Button size="sm" variant="outline" @click="runAnalysis">Retry</Button>
             </div>
-            <AnalysisCards v-else-if="analysisEntry.data" :analysis="analysisEntry.data" />
+            <AnalysisCards v-else-if="analysisEntry.data" :analysis="analysisEntry.data" @jump="onJump" />
           </div>
           <div v-show="activeTab === 'chat'" class="h-full">
             <ChatPanel :transcript-id="props.id" />
