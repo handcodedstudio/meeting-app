@@ -121,22 +121,40 @@ async function runTranscribeInternal(
     };
 
     emitProgress('load', 0, 'decoding audio');
+    const tDecode = Date.now();
     const decoded = await decodeToFloat32Pcm(filePath);
+    logger.info('transcribe: decoded', {
+      transcriptId,
+      durationSec: decoded.durationSec,
+      ms: Date.now() - tDecode
+    });
     checkCancel(transcriptId);
 
     emitProgress('transcribe', 0, 'running whisper');
+    const tWhisper = Date.now();
     const whisperOut = await runWhisper({
       modelPath: getWhisperModelPath(modelSize),
       samples: decoded.samples,
       language: settings.language === 'auto' ? undefined : settings.language,
       onProgress: (pct) => emitProgress('transcribe', pct)
     });
+    logger.info('transcribe: whisper done', {
+      transcriptId,
+      words: whisperOut.words.length,
+      ms: Date.now() - tWhisper
+    });
     checkCancel(transcriptId);
 
     emitProgress('diarize', 0, 'running diarization');
+    const tDiar = Date.now();
     const segments = await diarize(decoded.samples, {
       segmentationModel: getDiarizationSegmentationModel(),
       embeddingModel: getDiarizationEmbeddingModel()
+    });
+    logger.info('transcribe: diarize done', {
+      transcriptId,
+      segments: segments.length,
+      ms: Date.now() - tDiar
     });
     emitProgress('diarize', 90, `${new Set(segments.map((s) => s.speaker)).size} speakers detected`);
     checkCancel(transcriptId);

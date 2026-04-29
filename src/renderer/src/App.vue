@@ -1,17 +1,26 @@
 <script setup lang="ts">
 import { RouterView, RouterLink, useRoute } from 'vue-router';
 import { Mic, Library, Settings as SettingsIcon } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import Toaster from '@/components/ui/Toaster.vue';
 import { cn } from '@/lib/utils';
+import { useSettingsStore } from '@/stores/settings';
+import { useTheme } from '@/composables/useTheme';
 
 const route = useRoute();
 const isLibrary = computed(() => route.name === 'library');
 const isSettings = computed(() => route.name === 'settings');
+
+const settings = useSettingsStore();
+useTheme();
+
+onMounted(() => {
+  void settings.load();
+});
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-background text-foreground">
+  <div class="h-screen flex flex-col bg-background text-foreground">
     <header
       class="border-b border-border pl-20 pr-4 py-2 flex items-center gap-4 select-none"
       style="-webkit-app-region: drag"

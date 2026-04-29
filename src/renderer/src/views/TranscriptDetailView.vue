@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch } from 'vue';
+import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue';
 import { useActiveTranscriptStore } from '@/stores/activeTranscript';
 import { useAnalysisStore } from '@/stores/analysis';
 import { useChatStore } from '@/stores/chat';
 import { useSystemStore } from '@/stores/system';
 import { useSettingsStore } from '@/stores/settings';
 import { useTranscriptsStore } from '@/stores/transcripts';
+import { useAudioPlayerStore } from '@/stores/audioPlayer';
 import { useToast } from '@/composables/useToast';
 import TranscriptView from '@/components/TranscriptView.vue';
 import AnalysisCards from '@/components/AnalysisCards.vue';
@@ -26,6 +27,7 @@ const chat = useChatStore();
 const system = useSystemStore();
 const settings = useSettingsStore();
 const transcripts = useTranscriptsStore();
+const audioPlayer = useAudioPlayerStore();
 const { error: errorToast, success } = useToast();
 
 type Tab = 'transcript' | 'analysis' | 'chat';
@@ -61,9 +63,21 @@ onMounted(async () => {
 watch(
   () => props.id,
   () => {
+    audioPlayer.reset();
     loadAll();
   }
 );
+
+watch(
+  () => audioPlayer.error,
+  (msg) => {
+    if (msg) errorToast('Audio playback failed', msg);
+  }
+);
+
+onBeforeUnmount(() => {
+  audioPlayer.reset();
+});
 
 async function runAnalysis() {
   if (!ollamaReady.value) {
@@ -174,33 +188,38 @@ function back() {
       </div>
     </div>
 
-    <div class="flex-1 overflow-hidden">
+    <div class="flex-1 min-h-0 overflow-hidden">
       <div v-if="active.loadingId === props.id" class="h-full flex items-center justify-center text-sm text-muted-foreground">
         Loading transcript…
       </div>
       <div v-else-if="!transcript" class="h-full flex items-center justify-center text-sm text-muted-foreground">
         Transcript not found.
       </div>
-      <div v-else class="h-full">
-        <div class="hidden lg:grid lg:grid-cols-[1fr_1fr_360px] h-full">
-          <TranscriptView :transcript="transcript" class="border-r border-border" />
-          <div class="border-r border-border overflow-y-auto">
-            <div class="p-4 space-y-3">
-              <OllamaSetupBanner />
-              <div v-if="analysisEntry.status === 'idle'" class="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                Click Analyze to extract action items, decisions, key dates, and open questions.
-              </div>
-              <div v-else-if="analysisEntry.status === 'running'" class="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-                Analyzing…
-              </div>
-              <div v-else-if="analysisEntry.status === 'error'" class="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm space-y-2">
-                <p class="font-medium">Analysis failed</p>
-                <p class="text-xs text-muted-foreground">{{ analysisEntry.error }}</p>
-                <Button size="sm" variant="outline" @click="runAnalysis">Retry</Button>
-              </div>
-              <AnalysisCards v-else-if="analysisEntry.data" :analysis="analysisEntry.data" />
+      <div v-else class="h-full min-h-0">
+        <div class="hidden lg:grid lg:grid-cols-[1fr_1fr_360px] h-full min-h-0">
+          <TranscriptView :transcript="transcript" class="border-r border-border min-h-0" />
+          <section class="flex h-full min-h-0 flex-col border-r border-border">
+            <div class="shrink-0 border-b border-border px-4 py-3">
+              <h2 class="text-sm font-semibold">Summary</h2>
             </div>
-          </div>
+            <div class="app-scroll flex-1 min-h-0 overflow-y-auto">
+              <div class="p-4 space-y-3">
+                <OllamaSetupBanner />
+                <div v-if="analysisEntry.status === 'idle'" class="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                  Click Analyze to extract action items, decisions, key dates, and open questions.
+                </div>
+                <div v-else-if="analysisEntry.status === 'running'" class="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                  Analyzing…
+                </div>
+                <div v-else-if="analysisEntry.status === 'error'" class="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm space-y-2">
+                  <p class="font-medium">Analysis failed</p>
+                  <p class="text-xs text-muted-foreground">{{ analysisEntry.error }}</p>
+                  <Button size="sm" variant="outline" @click="runAnalysis">Retry</Button>
+                </div>
+                <AnalysisCards v-else-if="analysisEntry.data" :analysis="analysisEntry.data" />
+              </div>
+            </div>
+          </section>
           <ChatPanel :transcript-id="props.id" />
         </div>
 

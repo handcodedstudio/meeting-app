@@ -1,6 +1,9 @@
-import { app, BrowserWindow, session, shell } from 'electron';
+import { app, BrowserWindow, protocol, session, shell } from 'electron';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, extname, join } from 'node:path';
+import { readFile, stat } from 'node:fs/promises';
+import { loadTranscript } from './services/storage.js';
+import { isValidUlid } from './utils/ulid.js';
 
 const isDev = !!process.env.ELECTRON_RENDERER_URL;
 // Suppress the "Insecure CSP" devtools warning in dev. Vite's HMR runtime needs
@@ -29,10 +32,77 @@ function applyCsp() {
             "script-src 'self'; " +
             "style-src 'self' 'unsafe-inline'; " +
             "img-src 'self' data:; " +
-            "connect-src 'self';"
+            "media-src 'self' media:; " +
+            "connect-src 'self' media:;"
         ]
       }
     });
+  });
+}
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'media',
+    privileges: { standard: true, supportFetchAPI: true, stream: true, secure: true }
+  }
+]);
+
+const AUDIO_MIME_BY_EXT: Record<string, string> = {
+  '.mp3': 'audio/mpeg',
+  '.mp4': 'video/mp4',
+  '.m4a': 'audio/mp4',
+  '.wav': 'audio/wav',
+  '.aac': 'audio/aac',
+  '.flac': 'audio/flac',
+  '.ogg': 'audio/ogg',
+  '.opus': 'audio/ogg',
+  '.webm': 'audio/webm'
+};
+
+async function serveAudioFile(filePath: string): Promise<Response> {
+  const ext = extname(filePath).toLowerCase();
+  const contentType = AUDIO_MIME_BY_EXT[ext] ?? 'application/octet-stream';
+  try {
+    const s = await stat(filePath);
+    if (!s.isFile()) {
+      return new Response(`not a file: ${filePath}`, { status: 404 });
+    }
+  } catch {
+    return new Response(`source audio missing: ${filePath}`, { status: 404 });
+  }
+  let buffer: Buffer;
+  try {
+    buffer = await readFile(filePath);
+  } catch (err) {
+    return new Response(`read failed: ${String(err)}`, { status: 500 });
+  }
+  // Copy into a fresh ArrayBuffer to avoid SharedArrayBuffer typing on Buffer.
+  const body = new Uint8Array(buffer.byteLength);
+  body.set(buffer);
+  return new Response(body, {
+    status: 200,
+    headers: {
+      'Content-Type': contentType,
+      'Content-Length': String(body.byteLength),
+      'Cache-Control': 'no-store'
+    }
+  });
+}
+
+function registerMediaProtocol(): void {
+  protocol.handle('media', async (request) => {
+    try {
+      const url = new URL(request.url);
+      if (url.host !== 'audio') return new Response('not found', { status: 404 });
+      const id = url.pathname.replace(/^\/+/, '');
+      if (!isValidUlid(id)) return new Response('invalid id', { status: 400 });
+      const transcript = await loadTranscript(id);
+      if (!transcript) return new Response('not found', { status: 404 });
+      return await serveAudioFile(transcript.sourceFile.originalPath);
+    } catch (err) {
+      logger.error('media protocol error', { url: request.url, error: String(err) });
+      return new Response('error', { status: 500 });
+    }
   });
 }
 
@@ -71,7 +141,6 @@ function createWindow(): BrowserWindow {
 
   win.on('ready-to-show', () => {
     win.show();
-    if (isDev) win.webContents.openDevTools({ mode: 'detach' });
   });
 
   win.webContents.setWindowOpenHandler((details) => {
@@ -90,6 +159,7 @@ function createWindow(): BrowserWindow {
 
 void app.whenReady().then(() => {
   applyCsp();
+  registerMediaProtocol();
   registerIpcHandlers();
   mainWindow = createWindow();
 

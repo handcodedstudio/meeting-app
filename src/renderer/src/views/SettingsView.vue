@@ -141,16 +141,6 @@ async function saveAll() {
   }
 }
 
-async function saveField(patch: Partial<AppSettings>) {
-  if (!settings.validate(patch)) return;
-  try {
-    await settings.save(patch);
-    syncDraftFromStore();
-  } catch (e) {
-    errorToast('Save failed', e instanceof Error ? e.message : String(e));
-  }
-}
-
 async function reveal() {
   const latest = transcripts.summaries[0];
   if (!latest) {
@@ -202,7 +192,6 @@ function back() {
               id="ollama-url"
               v-model="draft.ollamaUrl"
               :invalid="!!settings.validation.ollamaUrl"
-              @blur="saveField({ ollamaUrl: draft.ollamaUrl.trim() })"
             />
             <p v-if="settings.validation.ollamaUrl" class="text-xs text-destructive">
               {{ settings.validation.ollamaUrl }}
@@ -215,7 +204,6 @@ function back() {
               id="ollama-model"
               v-model="draft.ollamaModel"
               :invalid="!!settings.validation.ollamaModel"
-              @blur="saveField({ ollamaModel: draft.ollamaModel.trim() })"
             />
             <p v-if="settings.validation.ollamaModel" class="text-xs text-destructive">
               {{ settings.validation.ollamaModel }}
@@ -238,7 +226,6 @@ function back() {
             <Switch
               id="auto-pull"
               v-model="draft.autoPullOllamaModel"
-              @update:model-value="(v: boolean) => saveField({ autoPullOllamaModel: v })"
             />
           </div>
         </CardContent>
@@ -255,7 +242,6 @@ function back() {
               id="whisper-size"
               v-model="draft.whisperModelSize"
               class="flex h-9 w-full rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              @change="saveField({ whisperModelSize: draft.whisperModelSize })"
             >
               <option v-for="m in whisperOptions" :key="m" :value="m">{{ m }}</option>
             </select>
@@ -267,7 +253,6 @@ function back() {
               id="language"
               v-model="draft.language"
               class="flex h-9 w-full rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              @change="saveField({ language: draft.language })"
             >
               <option value="en">English</option>
               <option value="auto">Auto-detect</option>
@@ -287,7 +272,6 @@ function back() {
               id="theme"
               v-model="draft.theme"
               class="flex h-9 w-full rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              @change="saveField({ theme: draft.theme })"
             >
               <option value="system">System</option>
               <option value="light">Light</option>

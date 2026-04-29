@@ -69,7 +69,7 @@ function sectionMarkdown(section: Section): string {
 </script>
 
 <template>
-  <div class="grid gap-4 sm:grid-cols-2">
+  <div class="flex flex-col gap-4">
     <Card v-for="section in sections" :key="section.title">
       <CardHeader class="flex flex-row items-center justify-between gap-2">
         <CardTitle class="flex items-center gap-2">

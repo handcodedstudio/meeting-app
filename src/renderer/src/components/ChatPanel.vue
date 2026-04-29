@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { Send, X, Trash2 } from 'lucide-vue-next';
 import { useChatStore } from '@/stores/chat';
+import { useAnalysisStore } from '@/stores/analysis';
 import { useSettingsStore } from '@/stores/settings';
 import { useToast } from '@/composables/useToast';
 import ChatMessage from './ChatMessage.vue';
@@ -11,6 +12,7 @@ import Input from './ui/Input.vue';
 const props = defineProps<{ transcriptId: string }>();
 
 const chat = useChatStore();
+const analysis = useAnalysisStore();
 const settings = useSettingsStore();
 const { error: errorToast } = useToast();
 
@@ -19,6 +21,7 @@ const scrollEl = ref<HTMLElement | null>(null);
 
 const entry = computed(() => chat.get(props.transcriptId));
 const pending = computed(() => entry.value.pending);
+const analysisDone = computed(() => analysis.get(props.transcriptId).status === 'done');
 
 onMounted(() => {
   if (!entry.value.loaded) {
@@ -36,7 +39,7 @@ watch(
 
 async function send() {
   const text = draft.value.trim();
-  if (!text || pending.value) return;
+  if (!text || pending.value || !analysisDone.value) return;
   draft.value = '';
   try {
     await chat.send(props.transcriptId, text, settings.settings.ollamaModel);
@@ -66,8 +69,8 @@ function onKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <section class="flex h-full flex-col">
-    <div class="flex items-center justify-between border-b border-border px-4 py-3">
+  <section class="flex h-full min-h-0 flex-col">
+    <div class="shrink-0 flex items-center justify-between border-b border-border px-4 py-3">
       <h2 class="text-sm font-semibold">Chat</h2>
       <Button
         v-if="entry.messages.length > 0"
@@ -81,9 +84,15 @@ function onKeydown(e: KeyboardEvent) {
       </Button>
     </div>
 
-    <div ref="scrollEl" class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+    <div ref="scrollEl" class="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3">
       <p
-        v-if="entry.messages.length === 0 && !pending"
+        v-if="!analysisDone"
+        class="text-center text-xs text-muted-foreground py-8"
+      >
+        Run analysis to enable chat.
+      </p>
+      <p
+        v-else-if="entry.messages.length === 0 && !pending"
         class="text-center text-xs text-muted-foreground py-8"
       >
         Ask anything about this transcript.
@@ -98,18 +107,18 @@ function onKeydown(e: KeyboardEvent) {
       <p v-if="entry.lastError" class="text-xs text-destructive">{{ entry.lastError }}</p>
     </div>
 
-    <form class="border-t border-border p-3 flex gap-2" @submit.prevent="send">
+    <form class="shrink-0 border-t border-border p-3 flex gap-2" @submit.prevent="send">
       <Input
         v-model="draft"
-        placeholder="Ask a question…"
-        :disabled="!!pending"
+        :placeholder="analysisDone ? 'Ask a question…' : 'Run analysis to enable chat'"
+        :disabled="!!pending || !analysisDone"
         class="flex-1"
         @keydown="onKeydown"
       />
       <Button v-if="pending" type="button" variant="outline" @click="cancel">
         <X class="h-4 w-4" />
       </Button>
-      <Button v-else type="submit" :disabled="!draft.trim()">
+      <Button v-else type="submit" :disabled="!draft.trim() || !analysisDone">
         <Send class="h-4 w-4" />
       </Button>
     </form>
