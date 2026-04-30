@@ -20,9 +20,15 @@ export interface DiarOptions {
   /**
    * Process audio in chunks of this many seconds. Sherpa's pyannote backend
    * crashes on very long inputs (~2hr); 30 min chunks stay inside its tested
-   * envelope. Speaker IDs are unique per chunk and not aligned across them.
+   * envelope.
    */
   chunkSec?: number;
+  /**
+   * Adjacent chunks overlap by this many seconds. Segments inside the overlap
+   * are used to map this chunk's speaker IDs back to the previous chunk's
+   * global IDs, so the same person keeps the same label across chunks.
+   */
+  overlapSec?: number;
 }
 
 interface WorkerOk {
@@ -78,7 +84,12 @@ export async function diarize(
     minDurationOff: 0.5
   };
 
-  const segments = await runInWorker(samples, config, opts.chunkSec ?? 1800);
+  const segments = await runInWorker(
+    samples,
+    config,
+    opts.chunkSec ?? 1800,
+    opts.overlapSec ?? 60
+  );
   return segments
     .map((s) => ({
       start: Number(s.start) || 0,
@@ -91,7 +102,8 @@ export async function diarize(
 function runInWorker(
   samples: Float32Array,
   config: OfflineSpeakerDiarizationConfig,
-  chunkSec: number
+  chunkSec: number,
+  overlapSec: number
 ): Promise<DiarSegment[]> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(WORKER_PATH);
@@ -114,7 +126,9 @@ function runInWorker(
         reject(new Error(`diarizer worker exited with code ${code}`));
       }
     });
-    worker.postMessage({ samples, config, chunkSec }, [samples.buffer as ArrayBuffer]);
+    worker.postMessage({ samples, config, chunkSec, overlapSec }, [
+      samples.buffer as ArrayBuffer
+    ]);
   });
 }
 
