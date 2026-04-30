@@ -21,12 +21,16 @@ const EMBEDDING_URL =
   'https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/nemo_en_titanet_small.onnx';
 const EMBEDDING_OUT = 'embedding.onnx';
 
+const VAD_URL =
+  'https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx';
+const VAD_OUT = 'silero_vad.onnx';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const REPO_ROOT = resolve(__dirname, '..');
 const DIAR_DIR = join(REPO_ROOT, 'resources', 'models', 'diarization');
 const MARKER = join(DIAR_DIR, '.installed');
-const MARKER_VALUE = 'pyannote-seg-3.0+titanet-small@v1';
+const MARKER_VALUE = 'pyannote-seg-3.0+titanet-small+silero-vad@v2';
 
 const log = (...args) => console.log('[fetch-sherpa-models]', ...args);
 
@@ -113,12 +117,19 @@ async function fetchEmbedding() {
   await download(EMBEDDING_URL, finalPath);
 }
 
+async function fetchVad() {
+  const finalPath = join(DIAR_DIR, VAD_OUT);
+  if (await pathExists(finalPath)) return;
+  await download(VAD_URL, finalPath);
+}
+
 async function main() {
   const current = await readMarker();
   if (
     current === MARKER_VALUE &&
     (await pathExists(join(DIAR_DIR, SEGMENTATION_OUT))) &&
-    (await pathExists(join(DIAR_DIR, EMBEDDING_OUT)))
+    (await pathExists(join(DIAR_DIR, EMBEDDING_OUT))) &&
+    (await pathExists(join(DIAR_DIR, VAD_OUT)))
   ) {
     log('already installed; skipping.');
     return;
@@ -127,6 +138,7 @@ async function main() {
   await mkdir(DIAR_DIR, { recursive: true });
   await fetchSegmentation();
   await fetchEmbedding();
+  await fetchVad();
   await writeFile(MARKER, MARKER_VALUE, 'utf8');
   log('done.');
 }

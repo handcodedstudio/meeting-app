@@ -34,13 +34,15 @@ const draft = reactive<{
   language: AppSettings['language'];
   theme: AppSettings['theme'];
   autoPullOllamaModel: boolean;
+  vadEnabled: boolean;
 }>({
   ollamaUrl: '',
   ollamaModel: '',
   whisperModelSize: 'small.en',
   language: 'en',
   theme: 'system',
-  autoPullOllamaModel: true
+  autoPullOllamaModel: true,
+  vadEnabled: true
 });
 
 const saving = ref(false);
@@ -101,6 +103,7 @@ function syncDraftFromStore() {
   draft.language = s.language;
   draft.theme = s.theme;
   draft.autoPullOllamaModel = s.autoPullOllamaModel;
+  draft.vadEnabled = s.vadEnabled;
 }
 
 onMounted(async () => {
@@ -117,7 +120,8 @@ const dirty = computed(() => {
     draft.whisperModelSize !== s.whisperModelSize ||
     draft.language !== s.language ||
     draft.theme !== s.theme ||
-    draft.autoPullOllamaModel !== s.autoPullOllamaModel
+    draft.autoPullOllamaModel !== s.autoPullOllamaModel ||
+    draft.vadEnabled !== s.vadEnabled
   );
 });
 
@@ -130,7 +134,8 @@ async function saveAll() {
       whisperModelSize: draft.whisperModelSize,
       language: draft.language,
       theme: draft.theme,
-      autoPullOllamaModel: draft.autoPullOllamaModel
+      autoPullOllamaModel: draft.autoPullOllamaModel,
+      vadEnabled: draft.vadEnabled
     });
     success('Settings saved');
     syncDraftFromStore();
@@ -257,6 +262,16 @@ function back() {
               <option value="en">English</option>
               <option value="auto">Auto-detect</option>
             </select>
+          </div>
+
+          <div class="flex items-center justify-between gap-4">
+            <div class="space-y-0.5">
+              <Label for="vad-enabled">Skip silent regions</Label>
+              <p class="text-xs text-muted-foreground">
+                Detect speech with Silero VAD and skip silence. Faster on long meetings; turn off if speech is being clipped.
+              </p>
+            </div>
+            <Switch id="vad-enabled" v-model="draft.vadEnabled" />
           </div>
         </CardContent>
       </Card>

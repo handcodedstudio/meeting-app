@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { pipeline } from 'node:stream/promises';
 import { Readable, Transform } from 'node:stream';
 
-const MODEL_NAME = process.env.WHISPER_MODEL || 'ggml-small.en.bin';
+const MODEL_NAME = process.env.WHISPER_MODEL || 'ggml-small.en-q5_1.bin';
 const MODEL_URL =
   process.env.WHISPER_URL ||
   `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${MODEL_NAME}`;

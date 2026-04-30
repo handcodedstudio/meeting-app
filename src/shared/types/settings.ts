@@ -8,6 +8,7 @@ export interface AppSettings {
   language: 'en' | 'auto';
   theme: 'system' | 'light' | 'dark';
   autoPullOllamaModel: boolean;
+  vadEnabled: boolean;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -17,5 +18,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   whisperModelSize: 'small.en',
   language: 'en',
   theme: 'system',
-  autoPullOllamaModel: true
+  autoPullOllamaModel: true,
+  vadEnabled: true
 };

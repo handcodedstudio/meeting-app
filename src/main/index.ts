@@ -135,7 +135,8 @@ function createWindow(): BrowserWindow {
       // sandbox:false is required because the preload is built as ESM (.mjs).
       // Sandbox mode forces CJS preloads. contextIsolation + nodeIntegration:false
       // still keep the renderer isolated from Node and the main process.
-      sandbox: false
+      sandbox: false,
+      devTools: false
     }
   });
 

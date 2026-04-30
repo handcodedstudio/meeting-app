@@ -1,6 +1,6 @@
 import { availableParallelism } from 'node:os';
 import { stat } from 'node:fs/promises';
-import { Whisper } from 'smart-whisper';
+import { Whisper, WhisperSamplingStrategy } from 'smart-whisper';
 import { logger } from './logger.js';
 
 export interface WhisperWord {
@@ -20,6 +20,13 @@ interface RunOptions {
   samples: Float32Array;
   language?: string;
   threads?: number;
+  /**
+   * Optional voiced slices, in seconds. When provided, whisper is called once
+   * per slice with offset/duration set; silent regions between slices are
+   * skipped entirely. Whisper.cpp returns segment timestamps in original-audio
+   * coordinates.
+   */
+  slices?: Array<{ startSec: number; endSec: number }>;
   onProgress?: (percent: number) => void;
 }
 
@@ -36,7 +43,7 @@ export async function runWhisper(opts: RunOptions): Promise<WhisperResult> {
   // doesn't keep a ggml model resident.
   const whisper = new Whisper(opts.modelPath, { gpu: true, offload: 0 });
   try {
-    const params: Record<string, unknown> = {
+    const baseParams: Record<string, unknown> = {
       // smart-whisper's binding only emits the `tokens` array when format
       // is 'detail'. The default 'simple' returns only { from, to, text }.
       format: 'detail',
@@ -49,26 +56,59 @@ export async function runWhisper(opts: RunOptions): Promise<WhisperResult> {
       print_special: false,
       suppress_blank: true,
       suppress_non_speech_tokens: true,
+      // Greedy decoding with no temperature fallback — for clean meeting audio
+      // the default beam-search + retry-on-low-confidence loop is wasted work.
+      strategy: WhisperSamplingStrategy.WHISPER_SAMPLING_GREEDY,
+      beam_size: 1,
+      best_of: 1,
+      temperature: 0,
+      temperature_inc: 0,
       n_threads: opts.threads ?? Math.max(2, Math.min(8, navigatorHardwareConcurrency()))
     };
 
-    const task = await whisper.transcribe(opts.samples, params);
-    if (opts.onProgress) {
-      task.on('transcribed', (segment) => {
-        // smart-whisper doesn't surface a percent — approximate from the
-        // segment end vs total duration.
-        const totalSec = opts.samples.length / 16000;
-        if (totalSec > 0) {
-          const pct = Math.min(99, (segment.to / 1000 / totalSec) * 100);
+    const totalSec = opts.samples.length / 16000;
+    const slices =
+      opts.slices && opts.slices.length > 0
+        ? opts.slices
+        : [{ startSec: 0, endSec: totalSec }];
+
+    const totalVoicedSec = slices.reduce(
+      (acc, s) => acc + Math.max(0, s.endSec - s.startSec),
+      0
+    );
+    let voicedDoneSec = 0;
+    let language: string | undefined;
+    const allWords: WhisperWord[] = [];
+
+    for (const slice of slices) {
+      const sliceLenSec = Math.max(0, slice.endSec - slice.startSec);
+      if (sliceLenSec <= 0) continue;
+      const params = {
+        ...baseParams,
+        offset_ms: Math.max(0, Math.round(slice.startSec * 1000)),
+        duration_ms: Math.max(0, Math.round(sliceLenSec * 1000))
+      };
+      const task = await whisper.transcribe(opts.samples, params);
+      if (opts.onProgress && totalVoicedSec > 0) {
+        task.on('transcribed', (segment) => {
+          const inSliceSec = Math.max(
+            0,
+            Math.min(sliceLenSec, segment.to / 1000 - slice.startSec)
+          );
+          const pct = Math.min(
+            99,
+            ((voicedDoneSec + inSliceSec) / totalVoicedSec) * 100
+          );
           opts.onProgress?.(pct);
-        }
-      });
+        });
+      }
+      const segments = (await task.result) as DetailedSegment[];
+      if (!language) language = segments[0]?.lang;
+      allWords.push(...segmentsToWords(segments));
+      voicedDoneSec += sliceLenSec;
     }
 
-    const segments = (await task.result) as DetailedSegment[];
-    const language = segments[0]?.lang ?? opts.language ?? 'en';
-    const words = segmentsToWords(segments);
-    return { language, words };
+    return { language: language ?? opts.language ?? 'en', words: allWords };
   } finally {
     try {
       await whisper.free();

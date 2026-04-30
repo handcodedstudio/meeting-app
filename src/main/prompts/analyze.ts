@@ -112,23 +112,36 @@ export function buildAnalyzeRetryPrompt(originalPrompt: string): string {
   return `${originalPrompt}\n\nIMPORTANT: Your previous output was not valid JSON. Return ONLY a single JSON object that matches the schema above. Do not wrap it in markdown fences. Do not include any prose before or after.`;
 }
 
+// Models routinely emit `null` for unknown optional fields despite the prompt
+// asking for omission. Accept null + undefined and coerce to undefined.
+const optionalString = z
+  .string()
+  .nullish()
+  .transform((v) => (v == null || v === '' ? undefined : v));
+const optionalNonNegInt = z
+  .number()
+  .int()
+  .nonnegative()
+  .nullish()
+  .transform((v) => (v == null ? undefined : v));
+
 const itemBaseContent = z.object({
   description: z.string().min(1),
-  sourceTurnIndex: z.number().int().nonnegative().optional()
+  sourceTurnIndex: optionalNonNegInt
 });
 
 const analysisContentSchema = z.object({
   actionItems: z
     .array(
       itemBaseContent.extend({
-        assignee: z.string().optional(),
-        dueDate: z.string().optional()
+        assignee: optionalString,
+        dueDate: optionalString
       })
     )
     .default([]),
   decisions: z.array(itemBaseContent).default([]),
   keyDates: z
-    .array(itemBaseContent.extend({ date: z.string().optional() }))
+    .array(itemBaseContent.extend({ date: optionalString }))
     .default([]),
   openQuestions: z.array(itemBaseContent).default([])
 });

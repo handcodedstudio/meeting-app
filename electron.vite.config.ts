@@ -14,7 +14,11 @@ export default defineConfig({
     },
     build: {
       rollupOptions: {
-        input: { index: resolve(__dirname, 'src/main/index.ts') }
+        input: {
+          index: resolve(__dirname, 'src/main/index.ts'),
+          'diarizer.worker': resolve(__dirname, 'src/main/services/diarizer.worker.ts'),
+          'vad.worker': resolve(__dirname, 'src/main/services/vad.worker.ts')
+        }
       }
     }
   },

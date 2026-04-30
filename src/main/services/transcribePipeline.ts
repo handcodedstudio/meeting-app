@@ -13,10 +13,12 @@ import type { WhisperModelSize } from '@shared/types/transcript';
 import {
   getDiarizationEmbeddingModel,
   getDiarizationSegmentationModel,
+  getVadModelPath,
   getWhisperModelPath
 } from './paths.js';
 import { decodeToFloat32Pcm } from './audioConvert.js';
 import { runWhisper } from './whisperRunner.js';
+import { runVad, type VoicedSlice } from './vad.js';
 import { diarize } from './diarizer.js';
 import {
   fuseWordsWithDiarization,
@@ -130,12 +132,37 @@ async function runTranscribeInternal(
     });
     checkCancel(transcriptId);
 
+    let slices: VoicedSlice[] | undefined;
+    if (settings.vadEnabled) {
+      emitProgress('load', 50, 'detecting speech');
+      const tVad = Date.now();
+      try {
+        slices = await runVad(decoded.samples, { modelPath: getVadModelPath() });
+        const voicedSec = slices.reduce((acc, s) => acc + (s.endSec - s.startSec), 0);
+        logger.info('transcribe: vad done', {
+          transcriptId,
+          slices: slices.length,
+          voicedSec: Number(voicedSec.toFixed(1)),
+          totalSec: Number(decoded.durationSec.toFixed(1)),
+          ms: Date.now() - tVad
+        });
+      } catch (err) {
+        logger.warn('transcribe: vad failed, transcribing full audio', {
+          transcriptId,
+          error: String(err)
+        });
+        slices = undefined;
+      }
+      checkCancel(transcriptId);
+    }
+
     emitProgress('transcribe', 0, 'running whisper');
     const tWhisper = Date.now();
     const whisperOut = await runWhisper({
       modelPath: getWhisperModelPath(modelSize),
       samples: decoded.samples,
       language: settings.language === 'auto' ? undefined : settings.language,
+      ...(slices ? { slices } : {}),
       onProgress: (pct) => emitProgress('transcribe', pct)
     });
     logger.info('transcribe: whisper done', {

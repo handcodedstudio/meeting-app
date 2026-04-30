@@ -94,5 +94,6 @@ export const settingsSchema = z.object({
   whisperModelSize: z.string(),
   language: z.enum(['en', 'auto']),
   theme: z.enum(['system', 'light', 'dark']),
-  autoPullOllamaModel: z.boolean()
+  autoPullOllamaModel: z.boolean(),
+  vadEnabled: z.boolean().default(true)
 });

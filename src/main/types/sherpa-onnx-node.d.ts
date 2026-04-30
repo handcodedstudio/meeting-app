@@ -46,8 +46,44 @@ declare module 'sherpa-onnx-node' {
     setConfig(config: { clustering: FastClusteringConfig }): void;
   }
 
+  export interface SileroVadModelConfig {
+    model?: string;
+    threshold?: number;
+    minSilenceDuration?: number;
+    minSpeechDuration?: number;
+    windowSize?: number;
+    maxSpeechDuration?: number;
+  }
+
+  export interface VadConfig {
+    sileroVad?: SileroVadModelConfig;
+    sampleRate?: number;
+    numThreads?: number;
+    provider?: string;
+    debug?: boolean | number;
+  }
+
+  export interface SpeechSegment {
+    /** Sample index (int32) where the segment starts in the original waveform. */
+    start: number;
+    samples: Float32Array;
+  }
+
+  export class Vad {
+    constructor(config: VadConfig, bufferSizeInSeconds: number);
+    acceptWaveform(samples: Float32Array): void;
+    isEmpty(): boolean;
+    isDetected(): boolean;
+    pop(): void;
+    front(enableExternalBuffer?: boolean): SpeechSegment;
+    flush(): void;
+    reset(): void;
+    clear(): void;
+  }
+
   const _default: {
     OfflineSpeakerDiarization: typeof OfflineSpeakerDiarization;
+    Vad: typeof Vad;
   };
   export default _default;
 }
