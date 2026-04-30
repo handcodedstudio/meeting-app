@@ -72,6 +72,24 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
     return audio;
   }
 
+  async function waitForMetadata(): Promise<void> {
+    if (audio.readyState >= 1) return;
+    await new Promise<void>((resolve, reject) => {
+      const onReady = () => {
+        audio.removeEventListener('loadedmetadata', onReady);
+        audio.removeEventListener('error', onErr);
+        resolve();
+      };
+      const onErr = () => {
+        audio.removeEventListener('loadedmetadata', onReady);
+        audio.removeEventListener('error', onErr);
+        reject(new Error('failed to load audio metadata'));
+      };
+      audio.addEventListener('loadedmetadata', onReady);
+      audio.addEventListener('error', onErr);
+    });
+  }
+
   async function play(id: string, fromSec?: number): Promise<void> {
     try {
       await ensureSource(id);
@@ -80,28 +98,13 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
     }
     try {
       if (typeof fromSec === 'number') {
-        if (audio.readyState < 1) {
-          await new Promise<void>((resolve, reject) => {
-            const onReady = () => {
-              audio.removeEventListener('loadedmetadata', onReady);
-              audio.removeEventListener('error', onErr);
-              resolve();
-            };
-            const onErr = () => {
-              audio.removeEventListener('loadedmetadata', onReady);
-              audio.removeEventListener('error', onErr);
-              reject(new Error('failed to load audio metadata'));
-            };
-            audio.addEventListener('loadedmetadata', onReady);
-            audio.addEventListener('error', onErr);
-          });
-        }
+        await waitForMetadata();
         audio.currentTime = fromSec;
       }
       await audio.play();
     } catch (e) {
       error.value = e instanceof Error ? e.message : String(e);
-       
+
       console.error('[audioPlayer] play() failed', e);
     }
   }
@@ -124,6 +127,18 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
 
   function seek(sec: number): void {
     if (!Number.isFinite(sec)) return;
+    audio.currentTime = Math.max(0, sec);
+    currentTime.value = audio.currentTime;
+  }
+
+  async function seekTo(id: string, sec: number): Promise<void> {
+    if (!Number.isFinite(sec)) return;
+    try {
+      await ensureSource(id);
+      await waitForMetadata();
+    } catch {
+      return;
+    }
     audio.currentTime = Math.max(0, sec);
     currentTime.value = audio.currentTime;
   }
@@ -162,6 +177,7 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
     pause,
     toggle,
     seek,
+    seekTo,
     seekAndPlay,
     setPlaybackRate,
     reset,

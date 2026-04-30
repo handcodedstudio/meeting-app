@@ -92,7 +92,7 @@ function onQueryUpdate(v: string): void {
 
 function onSeek(e: Event): void {
   const target = e.target as HTMLInputElement;
-  player.seek(Number(target.value));
+  void player.seekTo(props.transcript.id, Number(target.value));
 }
 
 function onRateChange(e: Event): void {

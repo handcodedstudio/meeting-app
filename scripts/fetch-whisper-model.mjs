@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Fetch the GGML whisper model used by whisper.cpp / smart-whisper.
-// Default: ggml-small.en.bin (~466 MB).
-// Lands at resources/models/whisper/ggml-small.en.bin.
+// Default: ggml-medium.en-q5_0.bin (~514 MB quantized).
+// Lands at resources/models/whisper/ggml-medium.en-q5_0.bin.
 // Idempotent via resources/models/.installed marker.
 
 import { mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { pipeline } from 'node:stream/promises';
 import { Readable, Transform } from 'node:stream';
 
-const MODEL_NAME = process.env.WHISPER_MODEL || 'ggml-small.en-q5_1.bin';
+const MODEL_NAME = process.env.WHISPER_MODEL || 'ggml-medium.en-q5_0.bin';
 const MODEL_URL =
   process.env.WHISPER_URL ||
   `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${MODEL_NAME}`;

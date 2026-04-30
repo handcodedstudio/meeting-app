@@ -1,4 +1,4 @@
-export type WhisperModelSize = 'tiny.en' | 'base.en' | 'small.en' | 'medium.en' | 'small' | 'medium' | 'large-v3';
+export type WhisperModelSize = 'medium.en';
 
 export interface Word {
   text: string;

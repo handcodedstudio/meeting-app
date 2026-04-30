@@ -38,7 +38,7 @@ interface RunOptions {
  */
 export async function runWhisper(opts: RunOptions): Promise<WhisperResult> {
   await assertExists(opts.modelPath);
-  // Loading the model takes a few seconds and allocates ~500 MB for small.en.
+  // Loading the model takes a few seconds and allocates ~600 MB for medium.en (q5_0).
   // We tear it down after every transcription so a long-lived dev session
   // doesn't keep a ggml model resident.
   const whisper = new Whisper(opts.modelPath, { gpu: true, offload: 0 });
@@ -210,7 +210,7 @@ async function assertExists(path: string): Promise<void> {
     await stat(path);
   } catch {
     throw new Error(
-      `Whisper model not found at ${path}. Run "npm run fetch:resources" before transcribing.`
+      `Whisper model not found at ${path}. Run "pnpm fetch:resources" before transcribing.`
     );
   }
 }

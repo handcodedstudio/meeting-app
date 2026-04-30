@@ -10,8 +10,10 @@ let inflight: Promise<AppSettings> | null = null;
 
 function validate(input: unknown): AppSettings {
   const parsed = settingsSchema.parse(input);
-  // settingsSchema treats whisperModelSize as string for forward-compat; cast
-  // back into the typed shape required by AppSettings.
+  // Whisper is locked to medium.en; coerce stale values from older builds.
+  if (parsed.whisperModelSize !== 'medium.en') {
+    parsed.whisperModelSize = 'medium.en';
+  }
   return parsed as unknown as AppSettings;
 }
 

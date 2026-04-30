@@ -15,7 +15,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   schemaVersion: 1,
   ollamaUrl: 'http://localhost:11434',
   ollamaModel: 'llama3.1:8b',
-  whisperModelSize: 'small.en',
+  whisperModelSize: 'medium.en',
   language: 'en',
   theme: 'system',
   autoPullOllamaModel: true,

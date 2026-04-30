@@ -38,7 +38,7 @@ const draft = reactive<{
 }>({
   ollamaUrl: '',
   ollamaModel: '',
-  whisperModelSize: 'small.en',
+  whisperModelSize: 'medium.en',
   language: 'en',
   theme: 'system',
   autoPullOllamaModel: true,
@@ -70,7 +70,7 @@ async function deleteResource(r: ResourceInfo) {
   if (!r.exists) return;
   const ok = window.confirm(
     `Delete ${r.label}?\n\n${r.path}\n\nFrees ${formatBytes(r.sizeBytes)}. ` +
-      'Re-run "npm run fetch:resources" to restore.'
+      'Re-run "pnpm fetch:resources" to restore.'
   );
   if (!ok) return;
   resourcesDeleting.value = r.kind;
@@ -84,16 +84,6 @@ async function deleteResource(r: ResourceInfo) {
     resourcesDeleting.value = null;
   }
 }
-
-const whisperOptions: WhisperModelSize[] = [
-  'tiny.en',
-  'base.en',
-  'small.en',
-  'medium.en',
-  'small',
-  'medium',
-  'large-v3'
-];
 
 function syncDraftFromStore() {
   const s = settings.settings;
@@ -242,14 +232,8 @@ function back() {
         </CardHeader>
         <CardContent class="space-y-4">
           <div class="space-y-1.5">
-            <Label for="whisper-size">Whisper model size</Label>
-            <select
-              id="whisper-size"
-              v-model="draft.whisperModelSize"
-              class="flex h-9 w-full rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option v-for="m in whisperOptions" :key="m" :value="m">{{ m }}</option>
-            </select>
+            <Label>Whisper model</Label>
+            <p class="text-sm text-muted-foreground">{{ draft.whisperModelSize }}</p>
           </div>
 
           <div class="space-y-1.5">

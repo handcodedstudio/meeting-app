@@ -41,7 +41,7 @@ function makeTranscript(overrides: Partial<Transcript> = {}): Transcript {
     },
     audio: { durationSec: 10 },
     language: 'en',
-    modelSize: 'small.en',
+    modelSize: 'medium.en',
     diarization: { backend: 'pyannote-3.1' },
     speakers: [{ id: 'SPEAKER_00', displayName: 'Speaker 1' }],
     turns: [],

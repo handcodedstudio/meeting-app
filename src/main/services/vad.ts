@@ -124,7 +124,7 @@ async function assertExists(path: string): Promise<void> {
     await stat(path);
   } catch {
     throw new Error(
-      `Silero VAD model not found at ${path}. Run "npm run fetch:resources" before transcribing.`
+      `Silero VAD model not found at ${path}. Run "pnpm fetch:resources" before transcribing.`
     );
   }
 }

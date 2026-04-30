@@ -156,7 +156,7 @@ Deliverables
 
 
 
-npm run dev, npm run build:mac (produces signed-or-unsigned .dmg), npm test
+pnpm dev, pnpm build:mac (produces signed-or-unsigned .dmg), pnpm test
 
 
 

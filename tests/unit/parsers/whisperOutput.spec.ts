@@ -18,7 +18,7 @@ const SOURCE_FILE: TranscriptSourceFile = {
 const META: ParseMeta = {
   id: '01HZZZSAMPLEID0000000000AA',
   title: 'sample',
-  modelSize: 'small.en',
+  modelSize: 'medium.en',
   sourceFile: SOURCE_FILE,
   createdAt: '2026-01-01T00:00:00.000Z'
 };

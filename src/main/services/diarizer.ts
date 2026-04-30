@@ -137,7 +137,7 @@ async function assertExists(path: string, label: string): Promise<void> {
     await stat(path);
   } catch {
     throw new Error(
-      `Diarization ${label} not found at ${path}. Run "npm run fetch:resources" before transcribing.`
+      `Diarization ${label} not found at ${path}. Run "pnpm fetch:resources" before transcribing.`
     );
   }
 }

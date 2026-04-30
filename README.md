@@ -27,44 +27,46 @@ Offline-first macOS Electron app for meeting transcription, diarization, and ana
 
 ## Install
 
+This project uses [pnpm](https://pnpm.io) — `npm install` and `yarn install` are blocked by a `preinstall` hook. Install pnpm once with `brew install pnpm` (or enable [Corepack](https://nodejs.org/api/corepack.html): `corepack enable`, which honors the `packageManager` field in `package.json`).
+
 ```bash
 nvm use
-npm install
+pnpm install
 ```
 
 ## Develop
 
 ```bash
 # Resources are needed before transcription works in dev. ~1.3 GB download.
-npm run fetch:resources
+pnpm fetch:resources
 
 # Hot-reloading dev shell.
-npm run dev
+pnpm dev
 ```
 
-The app spawns the bundled Python sidecar lazily on first transcribe. If `npm run fetch:resources` hasn't been run yet, transcription will fail with a clear message and everything else (UI, settings, library, Ollama health checks) still works.
+The app spawns the bundled Python sidecar lazily on first transcribe. If `pnpm fetch:resources` hasn't been run yet, transcription will fail with a clear message and everything else (UI, settings, library, Ollama health checks) still works.
 
 ## Test
 
 ```bash
-npm test                  # 102 unit tests
-npm run test:watch
-npm run test:coverage     # threshold: 80% lines on services/prompts/parsers/stores/lib
-npm run typecheck
+pnpm test                 # 102 unit tests
+pnpm test:watch
+pnpm test:coverage        # threshold: 80% lines on services/prompts/parsers/stores/lib
+pnpm typecheck
 ```
 
 ## Build
 
 ```bash
 # Produces dist/Local Meeting Transcriber-<version>-arm64.dmg
-npm run build:mac
+pnpm build:mac
 ```
 
 The DMG is **unsigned** by default. macOS Gatekeeper will refuse it on first launch — right-click the app → **Open** → **Open** to bypass once.
 
 ### Code signing (optional)
 
-Set the standard electron-builder env vars before `npm run build:mac`:
+Set the standard electron-builder env vars before `pnpm build:mac`:
 
 ```bash
 export CSC_LINK=path/to/cert.p12
@@ -93,7 +95,7 @@ Models are bundled with the app and live next to the source in `resources/models
 
 ```
 resources/models/
-├── whisper/ggml-small.en.bin           # whisper.cpp GGML model
+├── whisper/ggml-medium.en-q5_0.bin     # whisper.cpp GGML model
 └── diarization/segmentation.onnx       # sherpa-onnx pyannote-3.0
 └── diarization/embedding.onnx          # sherpa-onnx NeMo TitaNet
 ```
@@ -103,7 +105,7 @@ resources/models/
 ## Swap models
 
 - **LLM**: Settings → Ollama → Model. Any model installed locally (`ollama list`) works. Larger models (e.g. `llama3.1:70b`, `qwen2.5:32b`) give better analysis but take more RAM.
-- **Whisper**: Settings → Transcription → Whisper model size. `small.en` is the default (470 MB, ~2× realtime on M-series). To use a non-bundled size, the sidecar will download it from HuggingFace into the same models cache on first use.
+- **Whisper**: locked to `medium.en` (q5_0 quantized, ~514 MB). To override during a build, set `WHISPER_MODEL=ggml-<size>.bin` before `pnpm fetch:resources`.
 
 ## Troubleshooting
 
@@ -111,7 +113,7 @@ resources/models/
 |---|---|
 | "Ollama not running" banner won't clear | Run `ollama serve` in a terminal, or run Ollama.app. Click **Re-check**. |
 | "Speaker diarization not ready" on first transcribe | Settings → enter HuggingFace token. Visit https://huggingface.co/pyannote/speaker-diarization-3.1 and click **Agree and access repository** with the same account. |
-| `npm run fetch:resources` fails on Python download | The script falls back to a hardcoded python-build-standalone URL. If that's unreachable, set `PBS_URL` env var to a mirror. |
+| `pnpm fetch:resources` fails on Python download | The script falls back to a hardcoded python-build-standalone URL. If that's unreachable, set `PBS_URL` env var to a mirror. |
 | App launches blank | Check `~/Library/Application Support/Local Meeting Transcriber/logs/`. Right-click the app → **Show Package Contents** → `Contents/MacOS/` and run from terminal to see stderr. |
 | Transcription stalls at "diarize" | Check that the HuggingFace token in Settings is valid and the pyannote models are accessible. The sidecar fetches `pyannote/segmentation-3.0` (~6 MB) and `pyannote/wespeaker-voxceleb-resnet34-LM` (~26 MB) at runtime — token must remain valid. |
 | Analyze returns empty cards | The LLM didn't return valid JSON. Open the transcript folder; `analysis.json` will contain `rawModelOutput` for inspection. Try a larger model or click **Retry**. |
@@ -126,7 +128,7 @@ resources/models/
   - Renderer is fully sandboxed (`contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`); the only host bridge is the typed `window.api` defined in `src/preload/index.ts`.
 - **Bundling:**
   - `python-build-standalone` 3.12.7 vendored under `resources/python/` at build time (not committed).
-  - Whisper `small.en` weights bundled in the DMG.
+  - Whisper `medium.en` (q5_0) weights bundled in the DMG.
   - pyannote weights downloaded on first run into `userData/models/pyannote/` (smaller DMG, simpler licensing).
 - **Architecture targets:** v1 ships `arm64` only. Intel support is a `target.arch: [arm64, x64]` flip in `electron-builder.yml` plus an `x86_64-apple-darwin` python-build-standalone download — left out to halve the DMG and match the dev box.
 

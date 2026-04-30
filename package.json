@@ -9,10 +9,12 @@
   "engines": {
     "node": ">=20.18"
   },
+  "packageManager": "pnpm@10.26.0",
   "scripts": {
+    "preinstall": "npx -y only-allow pnpm",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "build:mac": "npm run fetch:resources && electron-vite build && electron-builder --mac --arm64",
+    "build:mac": "pnpm fetch:resources && electron-vite build && electron-builder --mac --arm64",
     "fetch:resources": "node scripts/fetch-whisper-model.mjs && node scripts/fetch-sherpa-models.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -59,5 +61,14 @@
     "vitest": "^4.1.5",
     "vue-eslint-parser": "^10.4.0",
     "vue-tsc": "^3.2.7"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "esbuild",
+      "msw",
+      "smart-whisper",
+      "vue-demi"
+    ]
   }
 }
