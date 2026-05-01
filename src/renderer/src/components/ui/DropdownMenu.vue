@@ -25,7 +25,11 @@ const contentClass = computed(() =>
       <slot name="trigger" />
     </DropdownMenuTrigger>
     <DropdownMenuPortal>
-      <DropdownMenuContent :align="align ?? 'end'" :class="contentClass" :side-offset="4">
+      <DropdownMenuContent
+        :align="align ?? 'end'"
+        :class="contentClass"
+        :side-offset="4"
+      >
         <slot />
       </DropdownMenuContent>
     </DropdownMenuPortal>

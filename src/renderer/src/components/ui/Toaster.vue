@@ -10,6 +10,11 @@ const { toasts, dismiss } = useToast();
     class="pointer-events-none fixed bottom-4 right-4 z-[60] flex flex-col gap-2"
     aria-live="polite"
   >
-    <Toast v-for="t in toasts" :key="t.id" :toast="t" @dismiss="dismiss" />
+    <Toast
+      v-for="t in toasts"
+      :key="t.id"
+      :toast="t"
+      @dismiss="dismiss"
+    />
   </div>
 </template>

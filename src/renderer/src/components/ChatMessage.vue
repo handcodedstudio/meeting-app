@@ -31,12 +31,18 @@ const bubbleClass = computed(() =>
   <div :class="cn('flex w-full', isUser ? 'justify-end' : 'justify-start')">
     <div :class="bubbleClass">
       <span v-if="content">{{ content }}</span>
-      <span v-else-if="pending" class="inline-flex gap-1 items-center text-muted-foreground">
+      <span
+        v-else-if="pending"
+        class="inline-flex gap-1 items-center text-muted-foreground"
+      >
         <span class="animate-pulse">·</span>
         <span class="animate-pulse [animation-delay:120ms]">·</span>
         <span class="animate-pulse [animation-delay:240ms]">·</span>
       </span>
-      <span v-else class="text-muted-foreground italic">(empty)</span>
+      <span
+        v-else
+        class="text-muted-foreground italic"
+      >(empty)</span>
     </div>
   </div>
 </template>

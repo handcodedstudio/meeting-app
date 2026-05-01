@@ -15,7 +15,11 @@ const translate = computed(() => `translateX(-${100 - Math.min(100, Math.max(0, 
 </script>
 
 <template>
-  <ProgressRoot :model-value="props.value" :max="props.max" :class="rootClass">
+  <ProgressRoot
+    :model-value="props.value"
+    :max="props.max"
+    :class="rootClass"
+  >
     <ProgressIndicator
       class="h-full bg-primary transition-transform duration-300"
       :style="{ transform: translate }"

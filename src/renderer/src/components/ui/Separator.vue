@@ -18,5 +18,8 @@ const classes = computed(() =>
 </script>
 
 <template>
-  <Separator :orientation="props.orientation" :class="classes" />
+  <Separator
+    :orientation="props.orientation"
+    :class="classes"
+  />
 </template>

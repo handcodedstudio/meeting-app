@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DEFAULT_MINUTES_TEMPLATE } from './types/settings';
 
 export const wordSchema = z.object({
   text: z.string(),
@@ -72,6 +73,15 @@ export const analysisSchema = z.object({
   rawModelOutput: z.string().optional()
 });
 
+export const minutesSchema = z.object({
+  schemaVersion: z.literal(1),
+  transcriptId: z.string(),
+  model: z.string(),
+  generatedAt: z.string(),
+  template: z.string(),
+  content: z.string()
+});
+
 export const chatMessageSchema = z.object({
   id: z.string(),
   role: z.enum(['user', 'assistant', 'system']),
@@ -95,5 +105,6 @@ export const settingsSchema = z.object({
   language: z.enum(['en', 'auto']),
   theme: z.enum(['system', 'light', 'dark']),
   autoPullOllamaModel: z.boolean(),
-  vadEnabled: z.boolean().default(true)
+  vadEnabled: z.boolean().default(true),
+  minutesTemplate: z.string().default(DEFAULT_MINUTES_TEMPLATE)
 });

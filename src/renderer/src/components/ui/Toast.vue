@@ -27,10 +27,21 @@ const classes = computed(() =>
 </script>
 
 <template>
-  <div :class="classes" role="status">
+  <div
+    :class="classes"
+    role="status"
+  >
     <div class="flex-1 space-y-0.5">
-      <p v-if="toast.title" class="text-sm font-medium leading-tight">{{ toast.title }}</p>
-      <p v-if="toast.description" class="text-xs text-muted-foreground leading-snug">
+      <p
+        v-if="toast.title"
+        class="text-sm font-medium leading-tight"
+      >
+        {{ toast.title }}
+      </p>
+      <p
+        v-if="toast.description"
+        class="text-xs text-muted-foreground leading-snug"
+      >
         {{ toast.description }}
       </p>
     </div>

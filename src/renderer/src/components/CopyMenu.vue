@@ -32,10 +32,22 @@ void props;
 <template>
   <DropdownMenu align="end">
     <template #trigger>
-      <Button :variant="variant" :size="size">
-        <Check v-if="copied" class="h-3.5 w-3.5" />
-        <Copy v-else class="h-3.5 w-3.5" />
-        <span v-if="size !== 'icon'" class="text-xs">{{ copied ? 'Copied!' : label }}</span>
+      <Button
+        :variant="variant"
+        :size="size"
+      >
+        <Check
+          v-if="copied"
+          class="h-3.5 w-3.5"
+        />
+        <Copy
+          v-else
+          class="h-3.5 w-3.5"
+        />
+        <span
+          v-if="size !== 'icon'"
+          class="text-xs"
+        >{{ copied ? 'Copied!' : label }}</span>
         <ChevronDown class="h-3 w-3 opacity-60" />
       </Button>
     </template>

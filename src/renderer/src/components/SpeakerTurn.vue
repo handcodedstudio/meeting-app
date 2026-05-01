@@ -71,10 +71,16 @@ function playFromHere(): void {
     </div>
     <div class="flex-1 min-w-0 space-y-1">
       <div class="text-xs">
-        <SpeakerRenameInput :speaker-id="turn.speaker" :display-name="turn.displayName" />
+        <SpeakerRenameInput
+          :speaker-id="turn.speaker"
+          :display-name="turn.displayName"
+        />
       </div>
       <p class="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-        <template v-for="(seg, i) in segments" :key="i">
+        <template
+          v-for="(seg, i) in segments"
+          :key="i"
+        >
           <mark
             v-if="seg.match"
             class="bg-yellow-200/60 dark:bg-yellow-500/30 rounded px-0.5"

@@ -36,3 +36,12 @@ export interface Analysis {
   openQuestions: OpenQuestion[];
   rawModelOutput?: string;
 }
+
+export interface Minutes {
+  schemaVersion: 1;
+  transcriptId: string;
+  model: string;
+  generatedAt: string;
+  template: string;
+  content: string;
+}

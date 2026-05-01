@@ -17,6 +17,7 @@ import Badge from '@/components/ui/Badge.vue';
 import Separator from '@/components/ui/Separator.vue';
 import { ArrowLeft, RefreshCw, FolderOpen, Save, Trash2, Loader2 } from 'lucide-vue-next';
 import type { AppSettings } from '@shared/types/settings';
+import { DEFAULT_MINUTES_TEMPLATE } from '@shared/types/settings';
 import type { WhisperModelSize } from '@shared/types/transcript';
 import type { ResourceInfo, ResourceKind } from '@shared/types/ipc';
 import { formatBytes } from '@/lib/format';
@@ -35,6 +36,7 @@ const draft = reactive<{
   theme: AppSettings['theme'];
   autoPullOllamaModel: boolean;
   vadEnabled: boolean;
+  minutesTemplate: string;
 }>({
   ollamaUrl: '',
   ollamaModel: '',
@@ -42,7 +44,8 @@ const draft = reactive<{
   language: 'en',
   theme: 'system',
   autoPullOllamaModel: true,
-  vadEnabled: true
+  vadEnabled: true,
+  minutesTemplate: ''
 });
 
 const saving = ref(false);
@@ -94,6 +97,7 @@ function syncDraftFromStore() {
   draft.theme = s.theme;
   draft.autoPullOllamaModel = s.autoPullOllamaModel;
   draft.vadEnabled = s.vadEnabled;
+  draft.minutesTemplate = s.minutesTemplate;
 }
 
 onMounted(async () => {
@@ -111,7 +115,8 @@ const dirty = computed(() => {
     draft.language !== s.language ||
     draft.theme !== s.theme ||
     draft.autoPullOllamaModel !== s.autoPullOllamaModel ||
-    draft.vadEnabled !== s.vadEnabled
+    draft.vadEnabled !== s.vadEnabled ||
+    draft.minutesTemplate !== s.minutesTemplate
   );
 });
 
@@ -125,7 +130,8 @@ async function saveAll() {
       language: draft.language,
       theme: draft.theme,
       autoPullOllamaModel: draft.autoPullOllamaModel,
-      vadEnabled: draft.vadEnabled
+      vadEnabled: draft.vadEnabled,
+      minutesTemplate: draft.minutesTemplate
     });
     success('Settings saved');
     syncDraftFromStore();
@@ -152,13 +158,22 @@ async function reveal() {
 function back() {
   router.push({ name: 'library' });
 }
+
+function resetMinutesTemplate() {
+  draft.minutesTemplate = DEFAULT_MINUTES_TEMPLATE;
+}
 </script>
 
 <template>
   <section class="h-full overflow-y-auto px-6 py-6">
     <div class="mx-auto max-w-2xl space-y-6">
       <div class="flex items-center gap-3">
-        <Button variant="ghost" size="icon" aria-label="Back" @click="back">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Back"
+          @click="back"
+        >
           <ArrowLeft class="h-4 w-4" />
         </Button>
         <h1 class="text-base font-semibold">Settings</h1>
@@ -171,12 +186,28 @@ function back() {
         <CardContent class="space-y-4">
           <div class="flex items-center gap-2 text-sm">
             <span class="text-muted-foreground">Status:</span>
-            <Badge v-if="system.ollama.running" variant="success">
+            <Badge
+              v-if="system.ollama.running"
+              variant="success"
+            >
               Running{{ system.ollama.version ? ` · v${system.ollama.version}` : '' }}
             </Badge>
-            <Badge v-else variant="destructive">Not running</Badge>
-            <Button variant="ghost" size="sm" :disabled="system.polling" @click="system.pollAll">
-              <RefreshCw class="h-3 w-3" :class="system.polling ? 'animate-spin' : ''" />
+            <Badge
+              v-else
+              variant="destructive"
+            >
+              Not running
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              :disabled="system.polling"
+              @click="system.pollAll"
+            >
+              <RefreshCw
+                class="h-3 w-3"
+                :class="system.polling ? 'animate-spin' : ''"
+              />
               <span class="text-xs">Re-check</span>
             </Button>
           </div>
@@ -188,7 +219,10 @@ function back() {
               v-model="draft.ollamaUrl"
               :invalid="!!settings.validation.ollamaUrl"
             />
-            <p v-if="settings.validation.ollamaUrl" class="text-xs text-destructive">
+            <p
+              v-if="settings.validation.ollamaUrl"
+              class="text-xs text-destructive"
+            >
               {{ settings.validation.ollamaUrl }}
             </p>
           </div>
@@ -200,13 +234,22 @@ function back() {
               v-model="draft.ollamaModel"
               :invalid="!!settings.validation.ollamaModel"
             />
-            <p v-if="settings.validation.ollamaModel" class="text-xs text-destructive">
+            <p
+              v-if="settings.validation.ollamaModel"
+              class="text-xs text-destructive"
+            >
               {{ settings.validation.ollamaModel }}
             </p>
-            <p v-if="system.ollama.models.length > 0" class="text-xs text-muted-foreground">
+            <p
+              v-if="system.ollama.models.length > 0"
+              class="text-xs text-muted-foreground"
+            >
               Detected: {{ system.ollama.models.join(', ') }}
             </p>
-            <p v-else-if="system.ollama.running" class="text-xs text-muted-foreground">
+            <p
+              v-else-if="system.ollama.running"
+              class="text-xs text-muted-foreground"
+            >
               No models pulled yet.
             </p>
           </div>
@@ -255,7 +298,43 @@ function back() {
                 Detect speech with Silero VAD and skip silence. Faster on long meetings; turn off if speech is being clipped.
               </p>
             </div>
-            <Switch id="vad-enabled" v-model="draft.vadEnabled" />
+            <Switch
+              id="vad-enabled"
+              v-model="draft.vadEnabled"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Minutes</CardTitle>
+        </CardHeader>
+        <CardContent class="space-y-4">
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between gap-2">
+              <Label for="minutes-template">Sample format</Label>
+              <Button
+                variant="ghost"
+                size="sm"
+                @click="resetMinutesTemplate"
+              >
+                <RefreshCw class="h-3 w-3" />
+                <span class="text-xs">Reset to default</span>
+              </Button>
+            </div>
+            <textarea
+              id="minutes-template"
+              v-model="draft.minutesTemplate"
+              rows="14"
+              spellcheck="false"
+              class="flex w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-xs leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
+            />
+            <p class="text-xs text-muted-foreground">
+              The Analyze button will use this as the structure for the generated minutes. Write the headings and section
+              order you want; placeholders like <code v-pre>{{ date }}</code> or <code v-pre>{{ attendees }}</code> are
+              filled in by the model.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -286,7 +365,11 @@ function back() {
         </CardHeader>
         <CardContent class="space-y-5">
           <div>
-            <Button variant="outline" size="sm" @click="reveal">
+            <Button
+              variant="outline"
+              size="sm"
+              @click="reveal"
+            >
               <FolderOpen class="h-3.5 w-3.5" />
               <span class="text-xs">Open transcripts folder</span>
             </Button>
@@ -311,7 +394,10 @@ function back() {
                 :disabled="resourcesLoading"
                 @click="loadResources"
               >
-                <RefreshCw class="h-3 w-3" :class="resourcesLoading ? 'animate-spin' : ''" />
+                <RefreshCw
+                  class="h-3 w-3"
+                  :class="resourcesLoading ? 'animate-spin' : ''"
+                />
                 <span class="text-xs">Refresh</span>
               </Button>
             </div>
@@ -325,10 +411,23 @@ function back() {
                 <div class="min-w-0 flex-1">
                   <div class="flex items-center gap-2">
                     <p class="text-sm font-medium">{{ r.label }}</p>
-                    <Badge v-if="!r.exists" variant="secondary">Not present</Badge>
+                    <Badge
+                      v-if="!r.exists"
+                      variant="secondary"
+                    >
+                      Not present
+                    </Badge>
                   </div>
-                  <p class="text-xs text-muted-foreground truncate" :title="r.path">{{ r.path }}</p>
-                  <p v-if="!r.removable && r.exists" class="text-xs text-amber-600">
+                  <p
+                    class="text-xs text-muted-foreground truncate"
+                    :title="r.path"
+                  >
+                    {{ r.path }}
+                  </p>
+                  <p
+                    v-if="!r.removable && r.exists"
+                    class="text-xs text-amber-600"
+                  >
                     {{ r.reasonNotRemovable }}
                   </p>
                 </div>
@@ -342,8 +441,14 @@ function back() {
                     :disabled="!r.removable || !r.exists || resourcesDeleting === r.kind"
                     @click="deleteResource(r)"
                   >
-                    <Loader2 v-if="resourcesDeleting === r.kind" class="h-3 w-3 animate-spin" />
-                    <Trash2 v-else class="h-3 w-3" />
+                    <Loader2
+                      v-if="resourcesDeleting === r.kind"
+                      class="h-3 w-3 animate-spin"
+                    />
+                    <Trash2
+                      v-else
+                      class="h-3 w-3"
+                    />
                     <span class="text-xs">Delete</span>
                   </Button>
                 </div>
@@ -362,7 +467,10 @@ function back() {
       <Separator />
 
       <div class="flex justify-end gap-2">
-        <Button :disabled="!dirty || saving" @click="saveAll">
+        <Button
+          :disabled="!dirty || saving"
+          @click="saveAll"
+        >
           <Save class="h-3.5 w-3.5" />
           <span class="text-xs">Save all</span>
         </Button>

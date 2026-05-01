@@ -13,6 +13,7 @@ import {
   listTranscripts,
   loadTranscript,
   loadAnalysis,
+  loadMinutes,
   loadChat,
   saveTranscript,
   deleteTranscript
@@ -34,9 +35,14 @@ async function handleLoad(_e: unknown, req: TranscriptsLoadReq): Promise<Transcr
     const id = assertUlid(req?.id, 'transcript id');
     const transcript = await loadTranscript(id);
     if (!transcript) throw new Error(`Transcript not found: ${id}`);
-    const [analysis, chat] = await Promise.all([loadAnalysis(id), loadChat(id)]);
+    const [analysis, minutes, chat] = await Promise.all([
+      loadAnalysis(id),
+      loadMinutes(id),
+      loadChat(id)
+    ]);
     const res: TranscriptsLoadRes = { transcript };
     if (analysis) res.analysis = analysis;
+    if (minutes) res.minutes = minutes;
     if (chat) res.chat = chat;
     return res;
   } catch (err) {

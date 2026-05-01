@@ -3,10 +3,11 @@ import { join } from 'node:path';
 import {
   transcriptSchema,
   analysisSchema,
-  chatHistorySchema
+  chatHistorySchema,
+  minutesSchema
 } from '@shared/zod-schemas';
 import type { Transcript, TranscriptSummary } from '@shared/types/transcript';
-import type { Analysis } from '@shared/types/analysis';
+import type { Analysis, Minutes } from '@shared/types/analysis';
 import type { ChatHistory } from '@shared/types/chat';
 import { getTranscriptDir, getTranscriptsDir } from './paths.js';
 import { atomicWriteJson } from '../utils/atomicWrite.js';
@@ -14,6 +15,7 @@ import { logger } from './logger.js';
 
 const TRANSCRIPT_FILE = 'transcript.json';
 const ANALYSIS_FILE = 'analysis.json';
+const MINUTES_FILE = 'minutes.json';
 const CHAT_FILE = 'chat.json';
 
 async function pathExists(p: string): Promise<boolean> {
@@ -75,6 +77,19 @@ export async function loadAnalysis(id: string): Promise<Analysis | null> {
   return readJsonValidated<Analysis>(file, analysisSchema as unknown as {
     parse: (input: unknown) => Analysis;
   });
+}
+
+export async function loadMinutes(id: string): Promise<Minutes | null> {
+  const file = join(getTranscriptDir(id), MINUTES_FILE);
+  return readJsonValidated<Minutes>(file, minutesSchema as unknown as {
+    parse: (input: unknown) => Minutes;
+  });
+}
+
+export async function saveMinutes(m: Minutes): Promise<Minutes> {
+  const file = join(getTranscriptDir(m.transcriptId), MINUTES_FILE);
+  await atomicWriteJson(file, m);
+  return m;
 }
 
 export async function loadChat(id: string): Promise<ChatHistory | null> {

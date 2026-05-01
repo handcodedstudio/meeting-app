@@ -37,6 +37,11 @@ const currentIdx = computed(() => STAGES.findIndex((s) => s.id === props.stage))
       </div>
     </div>
     <Progress :value="props.percent" />
-    <p v-if="message" class="text-xs text-muted-foreground">{{ message }}</p>
+    <p
+      v-if="message"
+      class="text-xs text-muted-foreground"
+    >
+      {{ message }}
+    </p>
   </div>
 </template>

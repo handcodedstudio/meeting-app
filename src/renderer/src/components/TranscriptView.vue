@@ -155,8 +155,14 @@ defineExpose({ jumpToSourceTurn });
           :aria-label="isThisPlaying ? 'Pause audio' : 'Play audio'"
           @click="togglePlay"
         >
-          <Pause v-if="isThisPlaying" class="h-4 w-4" />
-          <Play v-else class="h-4 w-4" />
+          <Pause
+            v-if="isThisPlaying"
+            class="h-4 w-4"
+          />
+          <Play
+            v-else
+            class="h-4 w-4"
+          />
         </Button>
         <span class="text-xs text-muted-foreground tabular-nums shrink-0">
           {{ formatDuration(playheadSec) }}
@@ -235,11 +241,17 @@ defineExpose({ jumpToSourceTurn });
             <ChevronDown class="h-3.5 w-3.5" />
           </button>
         </div>
-        <CopyMenu :options="copyOptions" label="Copy" />
+        <CopyMenu
+          :options="copyOptions"
+          label="Copy"
+        />
       </div>
     </div>
     <div class="app-scroll flex-1 min-h-0 overflow-y-scroll px-4 py-2">
-      <div v-if="turns.length === 0" class="py-8 text-center text-sm text-muted-foreground">
+      <div
+        v-if="turns.length === 0"
+        class="py-8 text-center text-sm text-muted-foreground"
+      >
         No turns yet.
       </div>
       <SpeakerTurn

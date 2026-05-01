@@ -71,7 +71,10 @@ function cancel() {
     <div class="mx-auto max-w-4xl space-y-6">
       <OllamaSetupBanner />
 
-      <UploadDropzone :disabled="!!active.transcribingId" @file="handleFile" />
+      <UploadDropzone
+        :disabled="!!active.transcribingId"
+        @file="handleFile"
+      />
 
       <div
         v-if="transcribing && active.progress"
@@ -79,7 +82,11 @@ function cancel() {
       >
         <div class="flex items-center justify-between">
           <p class="text-sm font-medium">Transcribing…</p>
-          <Button variant="ghost" size="sm" @click="cancel">
+          <Button
+            variant="ghost"
+            size="sm"
+            @click="cancel"
+          >
             <X class="h-3.5 w-3.5" />
             <span class="text-xs">Cancel</span>
           </Button>
@@ -125,7 +132,10 @@ function cancel() {
         >
           {{ `No transcripts match \`${query}\`.` }}
         </div>
-        <LibraryList v-else :summaries="filtered" />
+        <LibraryList
+          v-else
+          :summaries="filtered"
+        />
       </div>
     </div>
   </section>

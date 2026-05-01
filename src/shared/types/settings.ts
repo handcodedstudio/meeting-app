@@ -9,7 +9,29 @@ export interface AppSettings {
   theme: 'system' | 'light' | 'dark';
   autoPullOllamaModel: boolean;
   vadEnabled: boolean;
+  minutesTemplate: string;
 }
+
+export const DEFAULT_MINUTES_TEMPLATE = `# Meeting Minutes
+
+**Date:** {{date}}
+**Attendees:** {{attendees}}
+
+## Summary
+A short paragraph summarising the meeting.
+
+## Discussion
+- Key topic 1
+- Key topic 2
+
+## Decisions
+- Decision 1
+
+## Action Items
+- [ ] Owner — task — due date
+
+## Next Steps
+- Follow-up 1`;
 
 export const DEFAULT_SETTINGS: AppSettings = {
   schemaVersion: 1,
@@ -19,5 +41,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   language: 'en',
   theme: 'system',
   autoPullOllamaModel: true,
-  vadEnabled: true
+  vadEnabled: true,
+  minutesTemplate: DEFAULT_MINUTES_TEMPLATE
 };

@@ -8,6 +8,7 @@ export const IPC = {
   TRANSCRIPTS_DELETE: 'transcripts:delete',
   TRANSCRIPTS_RENAME_SPEAKER: 'transcripts:renameSpeaker',
   ANALYZE_RUN: 'analyze:run',
+  MINUTES_RUN: 'minutes:run',
   CHAT_SEND: 'chat:send',
   CHAT_CANCEL: 'chat:cancel',
   CHAT_CLEAR: 'chat:clear',

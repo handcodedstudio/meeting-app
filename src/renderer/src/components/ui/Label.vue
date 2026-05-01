@@ -9,5 +9,8 @@ const classes = computed(() =>
 </script>
 
 <template>
-  <label :for="props.for" :class="classes"><slot /></label>
+  <label
+    :for="props.for"
+    :class="classes"
+  ><slot /></label>
 </template>

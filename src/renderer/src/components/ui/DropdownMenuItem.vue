@@ -16,7 +16,11 @@ const itemClass = computed(() =>
 </script>
 
 <template>
-  <DropdownMenuItem :class="itemClass" :disabled="disabled" @select="(e: Event) => emit('select', e)">
+  <DropdownMenuItem
+    :class="itemClass"
+    :disabled="disabled"
+    @select="(e: Event) => emit('select', e)"
+  >
     <slot />
   </DropdownMenuItem>
 </template>

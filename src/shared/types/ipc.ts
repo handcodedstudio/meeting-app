@@ -1,5 +1,5 @@
 import type { Transcript, TranscriptSummary, WhisperModelSize } from './transcript';
-import type { Analysis } from './analysis';
+import type { Analysis, Minutes } from './analysis';
 import type { ChatHistory } from './chat';
 import type { AppSettings } from './settings';
 
@@ -22,6 +22,7 @@ export interface TranscriptsLoadReq {
 export interface TranscriptsLoadRes {
   transcript: Transcript;
   analysis?: Analysis;
+  minutes?: Minutes;
   chat?: ChatHistory;
 }
 export interface TranscriptsRenameReq {
@@ -38,6 +39,11 @@ export interface TranscriptsRenameSpeakerReq {
 }
 
 export interface AnalyzeRunReq {
+  id: string;
+  model?: string;
+}
+
+export interface MinutesRunReq {
   id: string;
   model?: string;
 }
@@ -132,6 +138,7 @@ export interface RendererApi {
   transcriptsRenameSpeaker: (req: TranscriptsRenameSpeakerReq) => Promise<Transcript>;
 
   analyzeRun: (req: AnalyzeRunReq) => Promise<Analysis>;
+  minutesRun: (req: MinutesRunReq) => Promise<Minutes>;
 
   chatSend: (req: ChatSendReq) => Promise<ChatSendRes>;
   chatCancel: (req: ChatCancelReq) => Promise<OkRes>;

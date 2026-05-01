@@ -19,6 +19,7 @@ const api: RendererApi = {
   transcriptsRenameSpeaker: (req) => ipcRenderer.invoke(IPC.TRANSCRIPTS_RENAME_SPEAKER, req),
 
   analyzeRun: (req) => ipcRenderer.invoke(IPC.ANALYZE_RUN, req),
+  minutesRun: (req) => ipcRenderer.invoke(IPC.MINUTES_RUN, req),
 
   chatSend: (req) => ipcRenderer.invoke(IPC.CHAT_SEND, req),
   chatCancel: (req) => ipcRenderer.invoke(IPC.CHAT_CANCEL, req),

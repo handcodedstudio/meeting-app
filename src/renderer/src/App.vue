@@ -33,7 +33,10 @@ onMounted(() => {
         <Mic class="h-4 w-4" />
         Local Meeting Transcriber
       </RouterLink>
-      <nav class="ml-auto flex items-center gap-1 text-sm" style="-webkit-app-region: no-drag">
+      <nav
+        class="ml-auto flex items-center gap-1 text-sm"
+        style="-webkit-app-region: no-drag"
+      >
         <RouterLink
           :to="{ name: 'library' }"
           :class="cn(

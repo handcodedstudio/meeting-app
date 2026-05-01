@@ -32,13 +32,27 @@ const contentClass = computed(() =>
 </script>
 
 <template>
-  <DialogRoot :open="open" @update:open="(v: boolean) => emit('update:open', v)">
+  <DialogRoot
+    :open="open"
+    @update:open="(v: boolean) => emit('update:open', v)"
+  >
     <DialogPortal>
       <DialogOverlay class="fixed inset-0 z-40 bg-black/50" />
       <DialogContent :class="contentClass">
-        <div v-if="title || description" class="mb-4 space-y-1">
-          <DialogTitle v-if="title" class="text-base font-semibold">{{ title }}</DialogTitle>
-          <DialogDescription v-if="description" class="text-sm text-muted-foreground">
+        <div
+          v-if="title || description"
+          class="mb-4 space-y-1"
+        >
+          <DialogTitle
+            v-if="title"
+            class="text-base font-semibold"
+          >
+            {{ title }}
+          </DialogTitle>
+          <DialogDescription
+            v-if="description"
+            class="text-sm text-muted-foreground"
+          >
             {{ description }}
           </DialogDescription>
         </div>

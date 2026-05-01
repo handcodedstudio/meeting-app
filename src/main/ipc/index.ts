@@ -1,6 +1,7 @@
 import { registerTranscriptsHandlers } from './transcripts.js';
 import { registerTranscribeHandlers } from './transcribe.js';
 import { registerAnalyzeHandlers } from './analyze.js';
+import { registerMinutesHandlers } from './minutes.js';
 import { registerChatHandlers } from './chat.js';
 import { registerOllamaHandlers } from './ollama.js';
 import { registerSettingsHandlers } from './settings.js';
@@ -12,6 +13,7 @@ export function registerIpcHandlers(): void {
   registerTranscriptsHandlers();
   registerTranscribeHandlers();
   registerAnalyzeHandlers();
+  registerMinutesHandlers();
   registerChatHandlers();
   registerOllamaHandlers();
   registerSettingsHandlers();

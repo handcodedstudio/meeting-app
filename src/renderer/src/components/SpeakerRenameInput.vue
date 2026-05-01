@@ -57,7 +57,10 @@ function onKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <span v-if="!editing" class="inline-flex items-center gap-1">
+  <span
+    v-if="!editing"
+    class="inline-flex items-center gap-1"
+  >
     <span class="font-medium">{{ displayName }}</span>
     <button
       type="button"
@@ -68,7 +71,10 @@ function onKeydown(e: KeyboardEvent) {
       <Pencil class="h-3 w-3" />
     </button>
   </span>
-  <span v-else class="inline-flex items-center gap-1">
+  <span
+    v-else
+    class="inline-flex items-center gap-1"
+  >
     <Input
       ref="inputRef"
       v-model="draft"
@@ -76,10 +82,20 @@ function onKeydown(e: KeyboardEvent) {
       :disabled="saving"
       @keydown="onKeydown"
     />
-    <Button size="icon" variant="ghost" :disabled="saving" @click="commit">
+    <Button
+      size="icon"
+      variant="ghost"
+      :disabled="saving"
+      @click="commit"
+    >
       <Check class="h-3.5 w-3.5" />
     </Button>
-    <Button size="icon" variant="ghost" :disabled="saving" @click="cancel">
+    <Button
+      size="icon"
+      variant="ghost"
+      :disabled="saving"
+      @click="cancel"
+    >
       <XIcon class="h-3.5 w-3.5" />
     </Button>
   </span>

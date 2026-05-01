@@ -84,7 +84,10 @@ function onKeydown(e: KeyboardEvent) {
       </Button>
     </div>
 
-    <div ref="scrollEl" class="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3">
+    <div
+      ref="scrollEl"
+      class="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3"
+    >
       <p
         v-if="!analysisDone"
         class="text-center text-xs text-muted-foreground py-8"
@@ -97,17 +100,29 @@ function onKeydown(e: KeyboardEvent) {
       >
         Ask anything about this transcript.
       </p>
-      <ChatMessage v-for="msg in entry.messages" :key="msg.id" :message="msg" />
+      <ChatMessage
+        v-for="msg in entry.messages"
+        :key="msg.id"
+        :message="msg"
+      />
       <ChatMessage
         v-if="pending"
         role="assistant"
         :content="pending.partial"
         :pending="!pending.partial"
       />
-      <p v-if="entry.lastError" class="text-xs text-destructive">{{ entry.lastError }}</p>
+      <p
+        v-if="entry.lastError"
+        class="text-xs text-destructive"
+      >
+        {{ entry.lastError }}
+      </p>
     </div>
 
-    <form class="shrink-0 border-t border-border p-3 flex gap-2" @submit.prevent="send">
+    <form
+      class="shrink-0 border-t border-border p-3 flex gap-2"
+      @submit.prevent="send"
+    >
       <Input
         v-model="draft"
         :placeholder="analysisDone ? 'Ask a question…' : 'Run analysis to enable chat'"
@@ -115,10 +130,19 @@ function onKeydown(e: KeyboardEvent) {
         class="flex-1"
         @keydown="onKeydown"
       />
-      <Button v-if="pending" type="button" variant="outline" @click="cancel">
+      <Button
+        v-if="pending"
+        type="button"
+        variant="outline"
+        @click="cancel"
+      >
         <X class="h-4 w-4" />
       </Button>
-      <Button v-else type="submit" :disabled="!draft.trim() || !analysisDone">
+      <Button
+        v-else
+        type="submit"
+        :disabled="!draft.trim() || !analysisDone"
+      >
         <Send class="h-4 w-4" />
       </Button>
     </form>

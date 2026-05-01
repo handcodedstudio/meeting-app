@@ -39,7 +39,10 @@ async function pull() {
     v-if="showBanner"
     class="rounded-md border border-amber-500/40 bg-amber-500/10 p-4 text-sm"
   >
-    <div v-if="!system.ollama.running" class="flex items-start gap-3">
+    <div
+      v-if="!system.ollama.running"
+      class="flex items-start gap-3"
+    >
       <AlertCircle class="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
       <div class="flex-1 space-y-2">
         <p class="font-medium">Ollama is not running</p>
@@ -50,28 +53,45 @@ async function pull() {
           <code class="flex-1 rounded bg-background border border-border px-2 py-1 text-xs font-mono">
             {{ installCmd }}
           </code>
-          <CopyButton :text="installCmd" variant="outline" />
+          <CopyButton
+            :text="installCmd"
+            variant="outline"
+          />
         </div>
-        <Button variant="outline" size="sm" @click="refresh">
+        <Button
+          variant="outline"
+          size="sm"
+          @click="refresh"
+        >
           <RefreshCw class="h-3.5 w-3.5" />
           <span class="text-xs">Re-check</span>
         </Button>
       </div>
     </div>
-    <div v-else-if="modelMissing" class="flex items-start gap-3">
+    <div
+      v-else-if="modelMissing"
+      class="flex items-start gap-3"
+    >
       <Download class="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
       <div class="flex-1 space-y-2">
         <p class="font-medium">Model "{{ settings.settings.ollamaModel }}" is not pulled</p>
         <p class="text-muted-foreground text-xs">
           Pull it now to enable analysis and chat. This may take several minutes on first run.
         </p>
-        <div v-if="system.ollamaPull" class="space-y-1">
+        <div
+          v-if="system.ollamaPull"
+          class="space-y-1"
+        >
           <Progress :value="system.ollamaPull.percent" />
           <p class="text-xs text-muted-foreground">
             {{ system.ollamaPull.status }} — {{ Math.round(system.ollamaPull.percent) }}%
           </p>
         </div>
-        <Button v-else size="sm" @click="pull">
+        <Button
+          v-else
+          size="sm"
+          @click="pull"
+        >
           <Download class="h-3.5 w-3.5" />
           <span class="text-xs">Pull {{ settings.settings.ollamaModel }}</span>
         </Button>

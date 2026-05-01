@@ -50,7 +50,17 @@ export default [
   {
     rules: {
       'vue/multi-word-component-names': 'off',
-      'vue/max-attributes-per-line': 'off',
+      'vue/max-attributes-per-line': [
+        'error',
+        {
+          singleline: { max: 1 },
+          multiline: { max: 1 }
+        }
+      ],
+      'vue/first-attribute-linebreak': [
+        'error',
+        { singleline: 'beside', multiline: 'below' }
+      ],
       'vue/singleline-html-element-content-newline': 'off',
       'vue/html-self-closing': 'off',
       'no-useless-assignment': 'warn',
