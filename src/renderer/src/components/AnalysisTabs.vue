@@ -33,9 +33,22 @@ const emit = defineEmits<{
   (e: 'generateMinutes'): void;
 }>();
 
-const minutesBusy = computed(
-  () => props.minutesEntry.status === 'running'
+const analysisStatus = computed(() => props.analysisEntry.status);
+const minutesStatus = computed(() => props.minutesEntry.status);
+const analysisRunning = computed(() => analysisStatus.value === 'running');
+const minutesBusy = computed(() => minutesStatus.value === 'running');
+const analysisIdle = computed(() => analysisStatus.value === 'idle');
+const analysisError = computed(() => analysisStatus.value === 'error');
+const minutesError = computed(() => minutesStatus.value === 'error');
+
+const minutes = computed<Minutes | undefined>(() => props.minutesEntry.data);
+const hasMinutesContent = computed(
+  () => !!minutes.value && minutes.value.content.length > 0
 );
+const minutesButtonLabel = computed(() => {
+  if (minutesBusy.value) return 'Generating…';
+  return minutes.value ? 'Regenerate' : 'Generate minutes';
+});
 
 type TabId =
   | 'actionItems'
@@ -115,9 +128,13 @@ const sections = computed<ListSection[]>(() => {
   ];
 });
 
-const activeTab = ref<TabId>('actionItems');
+const activeTab = ref<TabId>('chat');
 
 const tabs = computed(() => [
+  {
+    value: 'chat' as TabId,
+    label: 'Chat'
+  },
   ...sections.value.map((s) => ({
     value: s.id,
     label: s.label,
@@ -127,29 +144,43 @@ const tabs = computed(() => [
     value: 'minutes' as TabId,
     label: 'Minutes',
     count: props.minutesEntry.data ? 1 : undefined
-  },
-  {
-    value: 'chat' as TabId,
-    label: 'Chat'
   }
 ]);
 
 const validIds: TabId[] = [
+  'chat',
   'actionItems',
   'decisions',
   'keyDates',
   'openQuestions',
-  'minutes',
-  'chat'
+  'minutes'
 ];
 
 watch(activeTab, (val) => {
-  if (!validIds.includes(val)) activeTab.value = 'actionItems';
+  if (!validIds.includes(val)) activeTab.value = 'chat';
 });
 
 const activeSection = computed(() =>
   sections.value.find((s) => s.id === activeTab.value)
 );
+
+const isChatTab = computed(() => activeTab.value === 'chat');
+const isMinutesTab = computed(() => activeTab.value === 'minutes');
+
+const activeSectionCopyOptions = computed(() => {
+  const s = activeSection.value;
+  if (!s) return [];
+  return [
+    { label: 'Markdown', value: sectionMarkdown(s) },
+    { label: 'JSON', value: sectionJson(s) }
+  ];
+});
+
+const minutesCopyOptions = computed(() => {
+  const m = minutes.value;
+  if (!m) return [];
+  return [{ label: 'Markdown', value: m.content }];
+});
 
 function sectionMarkdown(section: ListSection): string {
   if (section.items.length === 0) return `## ${section.label}\n\n_${section.emptyHint}_`;
@@ -198,7 +229,7 @@ function downloadMinutes(minutes: Minutes) {
   >
     <!-- Chat tab fills its container; others live inside a scrollable wrapper. -->
     <div
-      v-if="activeTab === 'chat'"
+      v-if="isChatTab"
       class="h-full"
     >
       <ChatPanel :transcript-id="transcriptId" />
@@ -226,10 +257,7 @@ function downloadMinutes(minutes: Minutes) {
           </h3>
           <CopyMenu
             v-if="analysis"
-            :options="[
-              { label: 'Markdown', value: sectionMarkdown(activeSection) },
-              { label: 'JSON', value: sectionJson(activeSection) }
-            ]"
+            :options="activeSectionCopyOptions"
           />
         </div>
 
@@ -239,20 +267,20 @@ function downloadMinutes(minutes: Minutes) {
         />
 
         <div
-          v-if="!analysis && analysisEntry.status === 'idle'"
+          v-if="!analysis && analysisIdle"
           class="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground"
         >
           Click Analyze to extract action items, decisions, key dates, open questions, and minutes.
         </div>
         <div
-          v-else-if="!analysis && analysisEntry.status === 'running'"
+          v-else-if="!analysis && analysisRunning"
           class="flex items-center gap-2 text-xs text-muted-foreground"
         >
           <Loader2 class="h-3.5 w-3.5 animate-spin" />
           Analyzing…
         </div>
         <div
-          v-else-if="!analysis && analysisEntry.status === 'error'"
+          v-else-if="!analysis && analysisError"
           class="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm space-y-2"
         >
           <p class="font-medium">
@@ -311,7 +339,7 @@ function downloadMinutes(minutes: Minutes) {
       </template>
 
       <!-- Minutes tab -->
-      <template v-else-if="activeTab === 'minutes'">
+      <template v-else-if="isMinutesTab">
         <div class="flex items-center justify-between gap-2 mb-3">
           <h3 class="flex items-center gap-2 text-sm font-semibold">
             <FileText class="h-4 w-4 text-muted-foreground" />
@@ -319,15 +347,15 @@ function downloadMinutes(minutes: Minutes) {
           </h3>
           <div class="flex items-center gap-1">
             <CopyMenu
-              v-if="minutesEntry.data && minutesEntry.data.content"
-              :options="[{ label: 'Markdown', value: minutesEntry.data.content }]"
+              v-if="hasMinutesContent"
+              :options="minutesCopyOptions"
               label="Copy"
             />
             <Button
-              v-if="minutesEntry.data && minutesEntry.data.content"
+              v-if="hasMinutesContent && minutes"
               variant="ghost"
               size="sm"
-              @click="downloadMinutes(minutesEntry.data)"
+              @click="downloadMinutes(minutes)"
             >
               <Download class="h-3.5 w-3.5" />
               <span class="text-xs">Download</span>
@@ -345,26 +373,18 @@ function downloadMinutes(minutes: Minutes) {
                 v-else
                 class="h-3.5 w-3.5"
               />
-              <span class="text-xs">
-                {{
-                  minutesBusy
-                    ? 'Generating…'
-                    : minutesEntry.data
-                      ? 'Regenerate'
-                      : 'Generate minutes'
-                }}
-              </span>
+              <span class="text-xs">{{ minutesButtonLabel }}</span>
             </Button>
           </div>
         </div>
 
         <OllamaSetupBanner
-          v-if="!minutesEntry.data"
+          v-if="!minutes"
           class="mb-3"
         />
 
         <div
-          v-if="minutesEntry.status === 'error'"
+          v-if="minutesError"
           class="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm space-y-2 mb-3"
         >
           <p class="font-medium">
@@ -376,13 +396,13 @@ function downloadMinutes(minutes: Minutes) {
         </div>
 
         <div
-          v-if="minutesEntry.data && minutesEntry.data.content"
+          v-if="hasMinutesContent && minutes"
           class="rounded-md border border-border bg-muted/30 p-4"
         >
-          <pre class="whitespace-pre-wrap font-sans text-sm leading-relaxed">{{ minutesEntry.data.content }}</pre>
+          <pre class="whitespace-pre-wrap font-sans text-sm leading-relaxed">{{ minutes.content }}</pre>
         </div>
         <p
-          v-else-if="!minutesBusy && minutesEntry.status !== 'error'"
+          v-else-if="!minutesBusy && !minutesError"
           class="text-xs text-muted-foreground italic"
         >
           Click <span class="font-medium">Generate minutes</span> to draft minutes from your saved sample format. This runs Ollama

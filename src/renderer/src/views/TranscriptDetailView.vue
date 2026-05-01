@@ -56,6 +56,32 @@ const ollamaReady = computed(
   () => system.ollama.running && system.ollama.models.includes(settings.settings.ollamaModel)
 );
 
+const analysisStatus = computed(() => analysisEntry.value.status);
+const minutesStatus = computed(() => minutesEntry.value.status);
+const analysisRunning = computed(() => analysisStatus.value === 'running');
+const minutesRunning = computed(() => minutesStatus.value === 'running');
+const analyzeBusy = computed(() => analysisRunning.value || minutesRunning.value);
+
+const analyzeDisabled = computed(
+  () => !transcript.value || analyzeBusy.value || !ollamaReady.value
+);
+
+const analyzeLabel = computed(() => {
+  if (analysisRunning.value) return 'Analyzing…';
+  if (analysisStatus.value === 'done') return 'Re-analyze';
+  return 'Analyze';
+});
+
+const transcriptSubtitle = computed(() => {
+  const t = transcript.value;
+  if (!t) return '';
+  return [
+    formatDuration(t.audio.durationSec),
+    `${t.stats.speakerCount} speakers`,
+    `${t.stats.wordCount.toLocaleString()} words`
+  ].join(' · ');
+});
+
 async function loadAll() {
   active.clear();
   await active.load(props.id);
@@ -194,38 +220,23 @@ function back() {
           v-if="transcript"
           class="text-xs text-muted-foreground"
         >
-          {{ formatDuration(transcript.audio.durationSec) }} ·
-          {{ transcript.stats.speakerCount }} speakers ·
-          {{ transcript.stats.wordCount.toLocaleString() }} words
+          {{ transcriptSubtitle }}
         </p>
       </div>
       <Button
-        :disabled="
-          !transcript ||
-            analysisEntry.status === 'running' ||
-            minutesEntry.status === 'running' ||
-            !ollamaReady
-        "
+        :disabled="analyzeDisabled"
         size="sm"
         @click="runAnalysis"
       >
         <Loader2
-          v-if="analysisEntry.status === 'running'"
+          v-if="analysisRunning"
           class="h-3.5 w-3.5 animate-spin"
         />
         <Sparkles
           v-else
           class="h-3.5 w-3.5"
         />
-        <span class="text-xs">
-          {{
-            analysisEntry.status === 'running'
-              ? 'Analyzing…'
-              : analysisEntry.status === 'done'
-                ? 'Re-analyze'
-                : 'Analyze'
-          }}
-        </span>
+        <span class="text-xs">{{ analyzeLabel }}</span>
       </Button>
     </header>
 
