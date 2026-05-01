@@ -16,8 +16,7 @@ import {
   FileText,
   MessageSquare,
   Download,
-  Loader2,
-  Sparkles
+  Loader2
 } from 'lucide-vue-next';
 
 const props = defineProps<{
@@ -30,7 +29,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'jump', sourceTurnIndex: number): void;
   (e: 'retryAnalysis'): void;
-  (e: 'generateMinutes'): void;
 }>();
 
 const analysisStatus = computed(() => props.analysisEntry.status);
@@ -45,10 +43,6 @@ const minutes = computed<Minutes | undefined>(() => props.minutesEntry.data);
 const hasMinutesContent = computed(
   () => !!minutes.value && minutes.value.content.length > 0
 );
-const minutesButtonLabel = computed(() => {
-  if (minutesBusy.value) return 'Generating…';
-  return minutes.value ? 'Regenerate' : 'Generate minutes';
-});
 
 type TabId =
   | 'actionItems'
@@ -345,35 +339,21 @@ function downloadMinutes(minutes: Minutes) {
             <FileText class="h-4 w-4 text-muted-foreground" />
             Minutes
           </h3>
-          <div class="flex items-center gap-1">
+          <div
+            v-if="hasMinutesContent && minutes"
+            class="flex items-center gap-1"
+          >
             <CopyMenu
-              v-if="hasMinutesContent"
               :options="minutesCopyOptions"
               label="Copy"
             />
             <Button
-              v-if="hasMinutesContent && minutes"
               variant="ghost"
               size="sm"
               @click="downloadMinutes(minutes)"
             >
               <Download class="h-3.5 w-3.5" />
               <span class="text-xs">Download</span>
-            </Button>
-            <Button
-              size="sm"
-              :disabled="minutesBusy"
-              @click="emit('generateMinutes')"
-            >
-              <Loader2
-                v-if="minutesBusy"
-                class="h-3.5 w-3.5 animate-spin"
-              />
-              <Sparkles
-                v-else
-                class="h-3.5 w-3.5"
-              />
-              <span class="text-xs">{{ minutesButtonLabel }}</span>
             </Button>
           </div>
         </div>
@@ -396,17 +376,23 @@ function downloadMinutes(minutes: Minutes) {
         </div>
 
         <div
-          v-if="hasMinutesContent && minutes"
+          v-if="minutesBusy"
+          class="flex items-center gap-2 text-xs text-muted-foreground"
+        >
+          <Loader2 class="h-3.5 w-3.5 animate-spin" />
+          Generating minutes…
+        </div>
+        <div
+          v-else-if="hasMinutesContent && minutes"
           class="rounded-md border border-border bg-muted/30 p-4"
         >
           <pre class="whitespace-pre-wrap font-sans text-sm leading-relaxed">{{ minutes.content }}</pre>
         </div>
         <p
-          v-else-if="!minutesBusy && !minutesError"
+          v-else-if="!minutesError"
           class="text-xs text-muted-foreground italic"
         >
-          Click <span class="font-medium">Generate minutes</span> to draft minutes from your saved sample format. This runs Ollama
-          and can be slow on large transcripts — kept separate from the main Analyze action so you only pay the cost when you want it.
+          Minutes are drafted from your saved sample format whenever you click <span class="font-medium">Analyze</span>.
         </p>
       </template>
 

@@ -68,6 +68,7 @@ const analyzeDisabled = computed(
 
 const analyzeLabel = computed(() => {
   if (analysisRunning.value) return 'Analyzing…';
+  if (minutesRunning.value) return 'Generating minutes…';
   if (analysisStatus.value === 'done') return 'Re-analyze';
   return 'Analyze';
 });
@@ -124,29 +125,20 @@ async function runAnalysis() {
     errorToast('Ollama not ready', 'Start Ollama and pull the configured model first.');
     return;
   }
-  await analysis.run(props.id, settings.settings.ollamaModel);
+  const model = settings.settings.ollamaModel;
+  await analysis.run(props.id, model);
   if (analysisEntry.value.status === 'error') {
     errorToast('Analysis failed', analysisEntry.value.error ?? 'Unknown error');
-  } else {
-    success('Analysis complete');
-  }
-}
-
-async function runMinutesOnly() {
-  if (!ollamaReady.value) {
-    errorToast('Ollama not ready', 'Start Ollama and pull the configured model first.');
     return;
   }
-  if (analysisEntry.value.status === 'running') {
-    errorToast('Busy', 'Wait for the analysis to finish before generating minutes.');
-    return;
-  }
-  await minutes.run(props.id, settings.settings.ollamaModel);
+  // Chain minutes sequentially so the model stays warm and we don't pay
+  // the parallel-load cost we used to incur on Promise.all.
+  await minutes.run(props.id, model);
   if (minutesEntry.value.status === 'error') {
     errorToast('Minutes failed', minutesEntry.value.error ?? 'Unknown error');
-  } else {
-    success('Minutes generated');
+    return;
   }
+  success('Analysis complete');
 }
 
 function startTitleEdit() {
@@ -292,7 +284,6 @@ function back() {
               class="flex-1 min-h-0"
               @jump="onJump"
               @retry-analysis="runAnalysis"
-              @generate-minutes="runMinutesOnly"
             />
           </section>
         </div>
@@ -319,7 +310,6 @@ function back() {
               class="flex-1 min-h-0"
               @jump="onJump"
               @retry-analysis="runAnalysis"
-              @generate-minutes="runMinutesOnly"
             />
           </div>
         </div>
