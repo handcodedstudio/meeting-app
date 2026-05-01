@@ -56,6 +56,7 @@ async function startStream(
       model,
       messages: ollamaMessages,
       options: { temperature: 0.2 },
+      keepAlive: '15m',
       signal: controller.signal
     });
     for await (const chunk of iter) {

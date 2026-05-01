@@ -21,6 +21,9 @@ export interface OllamaGenerateRequest {
   prompt: string;
   format?: 'json' | string;
   options?: Record<string, unknown>;
+  // Top-level Ollama field (not inside `options`). Strings like '15m' tell
+  // Ollama to keep the model resident in RAM/VRAM between calls.
+  keepAlive?: string;
   signal?: AbortSignal;
 }
 
@@ -33,6 +36,7 @@ export interface OllamaStreamChatRequest {
   model: string;
   messages: OllamaChatMessage[];
   options?: Record<string, unknown>;
+  keepAlive?: string;
   signal?: AbortSignal;
 }
 
@@ -192,6 +196,7 @@ export async function generate(
   };
   if (req.format !== undefined) body.format = req.format;
   if (req.options !== undefined) body.options = req.options;
+  if (req.keepAlive !== undefined) body.keep_alive = req.keepAlive;
 
   const res = await fetch(joinUrl(baseUrl, '/api/generate'), {
     method: 'POST',
@@ -230,6 +235,7 @@ export async function* streamChat(
     stream: true
   };
   if (req.options !== undefined) body.options = req.options;
+  if (req.keepAlive !== undefined) body.keep_alive = req.keepAlive;
 
   const res = await fetch(joinUrl(baseUrl, '/api/chat'), {
     method: 'POST',

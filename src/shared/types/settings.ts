@@ -36,7 +36,7 @@ A short paragraph summarising the meeting.
 export const DEFAULT_SETTINGS: AppSettings = {
   schemaVersion: 1,
   ollamaUrl: 'http://localhost:11434',
-  ollamaModel: 'llama3.1:8b',
+  ollamaModel: 'llama3.2:3b',
   whisperModelSize: 'medium.en',
   language: 'en',
   theme: 'system',

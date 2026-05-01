@@ -392,8 +392,13 @@ export async function runAnalyze({
   const client = ollama ?? ollamaClient;
   const options: Record<string, unknown> = {
     temperature: settings?.temperature ?? 0.1,
-    num_ctx: settings?.numCtx ?? 8192
+    // 4096 fits the schema + an 80-turn chunk + JSON output for typical
+    // meetings while halving RAM/eval cost vs the previous 8192.
+    num_ctx: settings?.numCtx ?? 4096
   };
+  // Keep the model resident between chunks (and between analyze/minutes/chat
+  // calls) so we don't pay the multi-second reload pause each tab switch.
+  const keepAlive = '15m';
 
   const chunks = chunkTranscript(transcript);
   const partials: Analysis[] = [];
@@ -408,7 +413,8 @@ export async function runAnalyze({
         model,
         prompt,
         format: 'json',
-        options
+        options,
+        keepAlive
       };
       if (signal !== undefined) args.signal = signal;
       raw = await client.generate(baseUrl, args);
@@ -429,7 +435,8 @@ export async function runAnalyze({
             model,
             prompt: buildAnalyzeRetryPrompt(prompt),
             format: 'json',
-            options
+            options,
+            keepAlive
           };
           if (signal !== undefined) retryArgs.signal = signal;
           const retryRaw = await client.generate(baseUrl, retryArgs);

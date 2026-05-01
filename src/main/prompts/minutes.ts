@@ -76,7 +76,12 @@ export async function runMinutes({
   const prompt = buildMinutesPrompt(transcript, template);
   let raw: string;
   try {
-    const args: ollamaClient.OllamaGenerateRequest = { model, prompt, options };
+    const args: ollamaClient.OllamaGenerateRequest = {
+      model,
+      prompt,
+      options,
+      keepAlive: '15m'
+    };
     if (signal !== undefined) args.signal = signal;
     raw = await client.generate(baseUrl, args);
   } catch (err) {
