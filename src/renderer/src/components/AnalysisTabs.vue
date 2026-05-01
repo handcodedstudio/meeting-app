@@ -16,7 +16,8 @@ import {
   FileText,
   MessageSquare,
   Download,
-  Loader2
+  Loader2,
+  Sparkles
 } from 'lucide-vue-next';
 
 const props = defineProps<{
@@ -29,8 +30,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'jump', sourceTurnIndex: number): void;
   (e: 'retryAnalysis'): void;
-  (e: 'retryMinutes'): void;
+  (e: 'generateMinutes'): void;
 }>();
+
+const minutesBusy = computed(
+  () => props.minutesEntry.status === 'running'
+);
 
 type TabId =
   | 'actionItems'
@@ -312,22 +317,43 @@ function downloadMinutes(minutes: Minutes) {
             <FileText class="h-4 w-4 text-muted-foreground" />
             Minutes
           </h3>
-          <div
-            v-if="minutesEntry.data"
-            class="flex items-center gap-1"
-          >
+          <div class="flex items-center gap-1">
             <CopyMenu
+              v-if="minutesEntry.data && minutesEntry.data.content"
               :options="[{ label: 'Markdown', value: minutesEntry.data.content }]"
               label="Copy"
             />
             <Button
+              v-if="minutesEntry.data && minutesEntry.data.content"
               variant="ghost"
               size="sm"
-              :disabled="!minutesEntry.data.content"
               @click="downloadMinutes(minutesEntry.data)"
             >
               <Download class="h-3.5 w-3.5" />
               <span class="text-xs">Download</span>
+            </Button>
+            <Button
+              size="sm"
+              :disabled="minutesBusy"
+              @click="emit('generateMinutes')"
+            >
+              <Loader2
+                v-if="minutesBusy"
+                class="h-3.5 w-3.5 animate-spin"
+              />
+              <Sparkles
+                v-else
+                class="h-3.5 w-3.5"
+              />
+              <span class="text-xs">
+                {{
+                  minutesBusy
+                    ? 'Generating…'
+                    : minutesEntry.data
+                      ? 'Regenerate'
+                      : 'Generate minutes'
+                }}
+              </span>
             </Button>
           </div>
         </div>
@@ -338,15 +364,8 @@ function downloadMinutes(minutes: Minutes) {
         />
 
         <div
-          v-if="minutesEntry.status === 'running'"
-          class="flex items-center gap-2 text-xs text-muted-foreground"
-        >
-          <Loader2 class="h-3.5 w-3.5 animate-spin" />
-          Generating minutes…
-        </div>
-        <div
-          v-else-if="minutesEntry.status === 'error'"
-          class="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm space-y-2"
+          v-if="minutesEntry.status === 'error'"
+          class="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm space-y-2 mb-3"
         >
           <p class="font-medium">
             Minutes generation failed
@@ -354,25 +373,20 @@ function downloadMinutes(minutes: Minutes) {
           <p class="text-xs text-muted-foreground">
             {{ minutesEntry.error }}
           </p>
-          <Button
-            size="sm"
-            variant="outline"
-            @click="emit('retryMinutes')"
-          >
-            Retry
-          </Button>
         </div>
+
         <div
-          v-else-if="minutesEntry.data && minutesEntry.data.content"
+          v-if="minutesEntry.data && minutesEntry.data.content"
           class="rounded-md border border-border bg-muted/30 p-4"
         >
           <pre class="whitespace-pre-wrap font-sans text-sm leading-relaxed">{{ minutesEntry.data.content }}</pre>
         </div>
         <p
-          v-else
+          v-else-if="!minutesBusy && minutesEntry.status !== 'error'"
           class="text-xs text-muted-foreground italic"
         >
-          Click Analyze to generate minutes from your sample format.
+          Click <span class="font-medium">Generate minutes</span> to draft minutes from your saved sample format. This runs Ollama
+          and can be slow on large transcripts — kept separate from the main Analyze action so you only pay the cost when you want it.
         </p>
       </template>
 

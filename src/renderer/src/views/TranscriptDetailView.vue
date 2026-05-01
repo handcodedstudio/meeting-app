@@ -98,16 +98,9 @@ async function runAnalysis() {
     errorToast('Ollama not ready', 'Start Ollama and pull the configured model first.');
     return;
   }
-  const model = settings.settings.ollamaModel;
-  await Promise.all([analysis.run(props.id, model), minutes.run(props.id, model)]);
-  const analysisFailed = analysisEntry.value.status === 'error';
-  const minutesFailed = minutesEntry.value.status === 'error';
-  if (analysisFailed && minutesFailed) {
-    errorToast('Analyze failed', analysisEntry.value.error ?? minutesEntry.value.error ?? 'Unknown error');
-  } else if (analysisFailed) {
+  await analysis.run(props.id, settings.settings.ollamaModel);
+  if (analysisEntry.value.status === 'error') {
     errorToast('Analysis failed', analysisEntry.value.error ?? 'Unknown error');
-  } else if (minutesFailed) {
-    errorToast('Minutes failed', minutesEntry.value.error ?? 'Unknown error');
   } else {
     success('Analysis complete');
   }
@@ -118,9 +111,15 @@ async function runMinutesOnly() {
     errorToast('Ollama not ready', 'Start Ollama and pull the configured model first.');
     return;
   }
+  if (analysisEntry.value.status === 'running') {
+    errorToast('Busy', 'Wait for the analysis to finish before generating minutes.');
+    return;
+  }
   await minutes.run(props.id, settings.settings.ollamaModel);
   if (minutesEntry.value.status === 'error') {
     errorToast('Minutes failed', minutesEntry.value.error ?? 'Unknown error');
+  } else {
+    success('Minutes generated');
   }
 }
 
@@ -211,7 +210,7 @@ function back() {
         @click="runAnalysis"
       >
         <Loader2
-          v-if="analysisEntry.status === 'running' || minutesEntry.status === 'running'"
+          v-if="analysisEntry.status === 'running'"
           class="h-3.5 w-3.5 animate-spin"
         />
         <Sparkles
@@ -220,9 +219,9 @@ function back() {
         />
         <span class="text-xs">
           {{
-            analysisEntry.status === 'running' || minutesEntry.status === 'running'
+            analysisEntry.status === 'running'
               ? 'Analyzing…'
-              : analysisEntry.status === 'done' || minutesEntry.status === 'done'
+              : analysisEntry.status === 'done'
                 ? 'Re-analyze'
                 : 'Analyze'
           }}
@@ -262,7 +261,7 @@ function back() {
         v-else
         class="h-full min-h-0"
       >
-        <div class="hidden lg:grid lg:grid-cols-2 h-full min-h-0">
+        <div class="hidden lg:grid lg:grid-cols-[40%_60%] h-full min-h-0">
           <TranscriptView
             ref="transcriptViewDesktop"
             :transcript="transcript"
@@ -282,7 +281,7 @@ function back() {
               class="flex-1 min-h-0"
               @jump="onJump"
               @retry-analysis="runAnalysis"
-              @retry-minutes="runMinutesOnly"
+              @generate-minutes="runMinutesOnly"
             />
           </section>
         </div>
@@ -309,7 +308,7 @@ function back() {
               class="flex-1 min-h-0"
               @jump="onJump"
               @retry-analysis="runAnalysis"
-              @retry-minutes="runMinutesOnly"
+              @generate-minutes="runMinutesOnly"
             />
           </div>
         </div>

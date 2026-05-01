@@ -329,7 +329,7 @@ function resetMinutesTemplate() {
               rows="14"
               spellcheck="false"
               class="flex w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-xs leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
-            />
+            ></textarea>
             <p class="text-xs text-muted-foreground">
               The Analyze button will use this as the structure for the generated minutes. Write the headings and section
               order you want; placeholders like <code v-pre>{{ date }}</code> or <code v-pre>{{ attendees }}</code> are
